@@ -232,15 +232,20 @@ export function GenerateExperienceModal({
         {/* ── Step 2: Result review ── */}
         {step === 'result' && (
           <div className="flex flex-col gap-4">
-            <div
-              className={cn(
-                'max-h-56 overflow-y-auto rounded-md border bg-muted/30 px-3 py-3',
-                'whitespace-pre-line text-sm leading-relaxed'
-              )}
+            <ul
+              className="max-h-56 overflow-y-auto rounded-md border bg-muted/30 px-5 py-3 flex flex-col gap-1.5 list-disc"
               aria-label="Generated experience bullet points"
             >
-              {generatedBullets}
-            </div>
+              {generatedBullets
+                .split('\n')
+                .map((line) => line.replace(/^[\s•\-*]+/, '').trim())
+                .filter(Boolean)
+                .map((line, idx) => (
+                  <li key={idx} className="text-sm leading-relaxed">
+                    {line}
+                  </li>
+                ))}
+            </ul>
 
             <p className="text-xs text-muted-foreground">
               Accepting will append these bullet points to the existing description.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -94,14 +94,30 @@ export function PersonalDetailsForm({ defaultValues, onChange }: PersonalDetails
     }
   }, [defaultValues, reset])
 
-  // Propagate every change up to the parent (debouncing handled by the store's persist)
+  // Propagate every change up to the parent with 300ms debounce to avoid
+  // triggering a store write + localStorage persist on every keystroke.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const debouncedOnChange = useCallback(
+    (values: Partial<PersonalDetails>) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        onChange(values)
+      }, 300)
+    },
+    [onChange]
+  )
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = watch((values) => {
-      onChange(values as Partial<PersonalDetails>)
+      debouncedOnChange(values as Partial<PersonalDetails>)
     })
-    return () => subscription.unsubscribe()
-  }, [watch, onChange])
+    return () => {
+      subscription.unsubscribe()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [watch, debouncedOnChange])
 
   const inputClass = (hasError: boolean) =>
     cn('h-9', hasError && 'border-destructive focus-visible:ring-destructive/20')

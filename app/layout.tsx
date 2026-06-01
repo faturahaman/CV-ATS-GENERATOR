@@ -4,6 +4,11 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'ATS CV Generator',
   description: 'Create ATS-friendly resumes with AI-powered content generation.',
+  icons: {
+    icon: '/logos.svg',
+    shortcut: '/logos.svg',
+    apple: '/logos.svg',
+  },
 }
 
 export const viewport: Viewport = {

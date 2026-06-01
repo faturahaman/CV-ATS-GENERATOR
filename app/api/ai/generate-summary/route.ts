@@ -53,7 +53,7 @@ Requirements:
 - Sound credible and realistic
 - Keep concise and recruiter-friendly
 - 3-5 sentences only
-- 50-120 words
+- make sure it limit 500 char
 - Do not use first person pronouns
 
 Avoid these buzzwords:

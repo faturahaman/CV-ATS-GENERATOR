@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callOpenRouter } from '@/lib/openrouter'
-import { ResumeSchema } from '@/lib/validations'
+import { z } from 'zod'
 import {
   validateLanguage,
   genericErrorBody,
@@ -23,6 +23,70 @@ interface ATSScoreResult {
   topIssues: string[]
   quickWins: string[]
 }
+
+// ── Lenient schema for ATS scoring — all fields optional/partial ──────────────
+// The strict ResumeSchema rejects partially-filled resumes (e.g. missing email,
+// description < 10 chars). For ATS scoring we just need whatever data exists.
+
+const ATSResumeSchema = z.object({
+  id: z.string(),
+  title: z.string().optional().default(''),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  personalDetails: z.object({
+    fullName: z.string().optional().default(''),
+    lastName: z.string().optional().default(''),
+    email: z.string().optional().default(''),
+    phoneNumber: z.string().optional().default(''),
+    jobTarget: z.string().optional().default(''),
+    country: z.string().optional().default(''),
+    cityState: z.string().optional().default(''),
+    linkedinUrl: z.string().optional().default(''),
+    githubUrl: z.string().optional().default(''),
+    portfolioUrl: z.string().optional().default(''),
+    address: z.string().optional().default(''),
+    postalCode: z.string().optional().default(''),
+    nationality: z.string().optional().default(''),
+    website: z.string().optional().default(''),
+    additionalContact: z.string().optional().default(''),
+    dateOfBirth: z.string().optional().default(''),
+    placeOfBirth: z.string().optional().default(''),
+  }).passthrough(),
+  professionalSummary: z.string().optional().default(''),
+  experience: z.array(z.object({
+    id: z.string(),
+    companyName: z.string().optional().default(''),
+    jobTitle: z.string().optional().default(''),
+    startDate: z.string().optional().default(''),
+    endDate: z.string().optional().default(''),
+    description: z.string().optional().default(''),
+  }).passthrough()).optional().default([]),
+  education: z.array(z.object({
+    id: z.string(),
+    schoolName: z.string().optional().default(''),
+    degree: z.string().optional().default(''),
+    fieldOfStudy: z.string().optional().default(''),
+    graduationDate: z.string().optional().default(''),
+    description: z.string().optional().default(''),
+  }).passthrough()).optional().default([]),
+  skills: z.array(z.object({
+    id: z.string(),
+    name: z.string().optional().default(''),
+    level: z.string().optional(),
+  }).passthrough()).optional().default([]),
+  certifications: z.array(z.object({
+    id: z.string(),
+    certificationName: z.string().optional().default(''),
+    issuingOrganization: z.string().optional().default(''),
+    issueDate: z.string().optional().default(''),
+    expirationDate: z.string().optional().default(''),
+  }).passthrough()).optional().default([]),
+  metadata: z.object({
+    completionProgress: z.number().optional().default(0),
+    atsScore: z.number().optional().default(0),
+    language: z.string().optional().default('EN'),
+  }).passthrough().optional(),
+}).passthrough()
 
 export async function POST(request: NextRequest) {
   const contentType = request.headers.get('content-type') ?? ''
@@ -52,7 +116,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(body.resume.createdAt),
       updatedAt: new Date(body.resume.updatedAt),
     }
-    const parseResult = ResumeSchema.safeParse(resumeRaw)
+    const parseResult = ATSResumeSchema.safeParse(resumeRaw)
     if (!parseResult.success) {
       return NextResponse.json({ error: 'Invalid resume data' }, { status: 400 })
     }

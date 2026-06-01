@@ -51,9 +51,9 @@ function SectionHeader({ title }: { title: string }) {
         fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: '0.3px',
-        margin: '16px 0 4px 0',
-        paddingBottom: '3px',
-        borderBottom: '1.5px solid #1a1a1a',
+        margin: '16px 0 6px 0',
+        paddingBottom: '4px',
+        borderBottom: '2px solid #1a1a1a',
         color: '#1a1a1a',
       }}
     >
@@ -77,7 +77,11 @@ function ExperienceSection({ entries }: { entries: ExperienceEntry[] }) {
         return (
           <div
             key={entry.id}
-            style={{ marginBottom: idx < entries.length - 1 ? '12px' : '0' }}
+            style={{
+              marginBottom: idx < entries.length - 1 ? '12px' : '0',
+              paddingBottom: idx < entries.length - 1 ? '12px' : '0',
+              borderBottom: idx < entries.length - 1 ? '1px solid #d0d0d0' : 'none',
+            }}
           >
             {/* Job title (bold) + date range (right-aligned) */}
             <div
@@ -420,6 +424,11 @@ export const CVPreview = memo(function CVPreview({ resume }: CVPreviewProps) {
         >
           {contactLine}
         </p>
+      )}
+
+      {/* ── Divider after header block ── */}
+      {(hasName || contactLine) && (
+        <hr style={{ border: 'none', borderTop: '2px solid #1a1a1a', margin: '4px 0 0 0' }} />
       )}
 
       {/* ── Professional Summary ── */}

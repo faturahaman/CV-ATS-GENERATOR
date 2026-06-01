@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callOpenRouter } from '@/lib/openrouter'
+import { cleanAIOutput } from '@/lib/ai-output-cleaner'
 import {
   validateLanguage,
   validateString,
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const improvedDescription = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 400 })
 
-    return NextResponse.json({ improvedDescription })
+    return NextResponse.json({ improvedDescription: cleanAIOutput(improvedDescription) })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     return NextResponse.json(genericErrorBody(message), { status: 500 })

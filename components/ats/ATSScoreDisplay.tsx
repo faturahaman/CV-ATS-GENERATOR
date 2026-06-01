@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Loader2, AlertCircle, Zap, BarChart2, RefreshCw } from 'lucide-react'
+import { useState, useCallback, memo } from 'react'
+import { Loader2, AlertCircle, BarChart2, RefreshCw, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAI } from '@/hooks/use-ai'
+import { useResumeStore } from '@/store/resume-store'
 import { translations } from '@/i18n/translations'
 import type { Resume } from '@/types/resume'
 import type { Language } from '@/i18n/translations'
@@ -19,7 +20,6 @@ interface ATSScoreDisplayProps {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Map a 0-100 score to a letter grade */
 function getGrade(score: number): string {
   if (score >= 90) return 'A'
   if (score >= 80) return 'B'
@@ -28,45 +28,43 @@ function getGrade(score: number): string {
   return 'F'
 }
 
-/** Tailwind colour tokens keyed by score range */
-function getScoreColors(score: number) {
-  if (score >= 70) {
-    return {
-      text: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-50 dark:bg-green-950/30',
-      ring: 'ring-green-200 dark:ring-green-800',
-      bar: 'bg-green-500',
-    }
-  }
-  if (score >= 40) {
-    return {
-      text: 'text-yellow-600 dark:text-yellow-400',
-      bg: 'bg-yellow-50 dark:bg-yellow-950/30',
-      ring: 'ring-yellow-200 dark:ring-yellow-800',
-      bar: 'bg-yellow-500',
-    }
-  }
-  return {
-    text: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    ring: 'ring-red-200 dark:ring-red-800',
-    bar: 'bg-red-500',
-  }
+/** Score label using warm neutral language */
+function getScoreLabel(score: number): string {
+  if (score >= 80) return 'Strong'
+  if (score >= 60) return 'Good'
+  if (score >= 40) return 'Fair'
+  return 'Needs work'
+}
+
+/** Bar fill color — uses theme primary (green) for good, muted tones for lower */
+function getBarColor(score: number): string {
+  if (score >= 70) return 'bg-primary'
+  if (score >= 40) return 'bg-foreground/40'
+  return 'bg-foreground/20'
+}
+
+/** Overall score text color */
+function getScoreTextColor(score: number): string {
+  if (score >= 70) return 'text-primary'
+  if (score >= 40) return 'text-foreground/70'
+  return 'text-muted-foreground'
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function CategoryBar({ label, score }: { label: string; score: number }) {
-  const colors = getScoreColors(score)
+const CategoryBar = memo(function CategoryBar({ label, score }: { label: string; score: number }) {
+  const barColor = getBarColor(score)
+  const textColor = score >= 70 ? 'text-primary' : 'text-muted-foreground'
+
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-foreground">{label}</span>
-        <span className={`font-semibold tabular-nums ${colors.text}`}>{score}</span>
+        <span className="text-foreground/80">{label}</span>
+        <span className={`font-semibold tabular-nums ${textColor}`}>{score}</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
+          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
           style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
           role="progressbar"
           aria-valuenow={score}
@@ -77,28 +75,36 @@ function CategoryBar({ label, score }: { label: string; score: number }) {
       </div>
     </div>
   )
-}
+})
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayProps) {
+export const ATSScoreDisplay = memo(function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayProps) {
   const t = translations[language]
   const { calculateATSScore, isLoading, error, clearError } = useAI()
+  const updateResume = useResumeStore((s) => s.updateResume)
   const [scoreData, setScoreData] = useState<ATSScoreResponse | null>(null)
 
   const handleCheckScore = useCallback(async () => {
     clearError()
-    setScoreData(null) // clear stale results so error + old score don't co-render
+    setScoreData(null)
     try {
       const result = await calculateATSScore(resume, language)
-      if (result) setScoreData(result)
+      if (result) {
+        setScoreData(result)
+        // Persist ATS score into resume metadata so ResumeCard badge stays in sync
+        updateResume(resume.id, {
+          metadata: { ...resume.metadata, atsScore: result.score },
+        })
+      }
     } catch {
-      // error is captured in the useAI hook's error state
+      // error captured in useAI hook
     }
-  }, [calculateATSScore, clearError, resume, language])
+  }, [calculateATSScore, clearError, resume, language, updateResume])
 
-  const scoreColors = scoreData ? getScoreColors(scoreData.score) : null
   const grade = scoreData ? getGrade(scoreData.score) : null
+  const scoreTextColor = scoreData ? getScoreTextColor(scoreData.score) : ''
+  const scoreLabel = scoreData ? getScoreLabel(scoreData.score) : ''
 
   const categoryKeys = [
     'contactInfo',
@@ -114,17 +120,29 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
     <div className="flex flex-col gap-4">
       {/* Header + Check button */}
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{t.atsScore.title}</h2>
+        <h2
+          className="text-sm font-semibold"
+          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+        >
+          {t.atsScore.title}
+        </h2>
         <Button
           size="sm"
+          variant={scoreData ? 'outline' : 'default'}
           onClick={handleCheckScore}
           disabled={!isOnline || isLoading}
+          className="rounded-full px-4 text-xs"
           aria-label={t.atsScore.checkScore}
         >
           {isLoading ? (
             <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
               {t.ai.generating}
+            </>
+          ) : scoreData ? (
+            <>
+              <RefreshCw className="h-3 w-3" />
+              Recheck
             </>
           ) : (
             t.atsScore.checkScore
@@ -137,22 +155,22 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
         <p className="text-xs text-muted-foreground">{t.status.offlineAiDisabled}</p>
       )}
 
-      {/* Error state with retry */}
+      {/* Error state */}
       {error && !isLoading && (
-        <div className="flex flex-col gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3">
-          <div className="flex items-start gap-2 text-xs text-destructive">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/50 p-3">
+          <div className="flex items-start gap-2 text-xs text-foreground/70">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
             <span>{error}</span>
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="self-start"
+            className="self-start rounded-full px-3 text-xs"
             onClick={handleCheckScore}
             disabled={!isOnline}
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className="h-3 w-3" />
             Retry
           </Button>
         </div>
@@ -160,16 +178,16 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
 
       {/* Not checked yet */}
       {!isLoading && !scoreData && !error && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 text-center text-muted-foreground">
-          <BarChart2 className="h-8 w-8 opacity-40" />
-          <p className="text-sm">{t.atsScore.notChecked}</p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-10 text-center">
+          <BarChart2 className="h-7 w-7 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">{t.atsScore.notChecked}</p>
         </div>
       )}
 
-      {/* Loading spinner */}
+      {/* Loading */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted-foreground">
+          <Loader2 className="h-7 w-7 animate-spin" />
           <p className="text-sm">{t.ai.generating}</p>
         </div>
       )}
@@ -177,33 +195,44 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
       {/* Score results */}
       {scoreData && !isLoading && (
         <div className="flex flex-col gap-5">
-          {/* Overall score + grade */}
-          <div
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl p-6 ring-1 ${scoreColors!.bg} ${scoreColors!.ring}`}
-          >
-            <div className="flex items-end gap-3">
+          {/* Overall score — editorial style */}
+          <div className="flex items-center justify-between rounded-lg border border-border bg-card px-5 py-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+                ATS Score
+              </span>
               <span
-                className={`text-5xl font-bold tabular-nums leading-none ${scoreColors!.text}`}
+                className="text-xs font-medium"
+                style={{ color: 'var(--color-muted-foreground)' }}
+              >
+                {scoreLabel}
+              </span>
+            </div>
+            <div className="flex items-end gap-2">
+              <span
+                className={`text-5xl font-bold tabular-nums leading-none ${scoreTextColor}`}
+                style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
                 aria-label={`ATS score: ${scoreData.score} out of 100`}
               >
                 {scoreData.score}
               </span>
-              <span
-                className={`mb-1 text-2xl font-bold ${scoreColors!.text}`}
-                aria-label={`Grade: ${grade}`}
-              >
-                {grade}
-              </span>
+              <div className="flex flex-col items-start mb-1 gap-0">
+                <span className={`text-lg font-bold leading-none ${scoreTextColor}`}>
+                  {grade}
+                </span>
+                <span className="text-xs text-muted-foreground">/100</span>
+              </div>
             </div>
-            <span className="text-xs font-medium text-muted-foreground">/ 100</span>
           </div>
 
           {/* Score breakdown */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
               {t.atsScore.scoreBreakdown}
             </h3>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3">
               {categoryKeys.map((key) => (
                 <CategoryBar
                   key={key}
@@ -217,17 +246,17 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
           {/* Top Issues */}
           {scoreData.topIssues.length > 0 && (
             <div className="flex flex-col gap-2">
-              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <AlertCircle className="h-3.5 w-3.5" />
                 {t.atsScore.topIssues}
               </h3>
               <ul className="flex flex-col gap-1.5">
                 {scoreData.topIssues.map((issue, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 rounded-md bg-destructive/5 px-3 py-2 text-xs text-foreground"
+                    className="flex items-start gap-2.5 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-xs text-foreground/80"
                   >
-                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
                     {issue}
                   </li>
                 ))}
@@ -238,17 +267,17 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
           {/* Quick Wins */}
           {scoreData.quickWins.length > 0 && (
             <div className="flex flex-col gap-2">
-              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Zap className="h-3.5 w-3.5 text-yellow-500" />
+              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
                 {t.atsScore.quickWins}
               </h3>
               <ul className="flex flex-col gap-1.5">
                 {scoreData.quickWins.map((win, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 rounded-md bg-green-500/5 px-3 py-2 text-xs text-foreground"
+                    className="flex items-start gap-2.5 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-foreground/80"
                   >
-                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
                     {win}
                   </li>
                 ))}
@@ -259,6 +288,6 @@ export function ATSScoreDisplay({ resume, language, isOnline }: ATSScoreDisplayP
       )}
     </div>
   )
-}
+})
 
 export default ATSScoreDisplay

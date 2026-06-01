@@ -65,7 +65,7 @@ export default function ResumeEditorPage() {
       </div>
 
       {/* Editor body — tighter padding on mobile */}
-      <div className="mx-auto w-full max-w-screen-xl flex-1 px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto w-full max-w-screen-xl flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <EditorLayout resumeId={id} />
       </div>
     </main>

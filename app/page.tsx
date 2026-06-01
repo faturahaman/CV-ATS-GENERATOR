@@ -25,7 +25,7 @@ export default function HomePage() {
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
         <ResumeListView
           onCreateNew={() => {}}
           onEdit={handleEdit}
@@ -33,6 +33,22 @@ export default function HomePage() {
           onDelete={handleDelete}
         />
       </main>
+      <footer className="border-t border-border/60 py-6">
+        <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 flex items-center justify-center">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()}{' '}
+            <a
+              href="https://rifatur.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
+              rifatur.io
+            </a>
+            . All rights reserved.
+          </p>
+        </div>
+      </footer>
     </>
   )
 }

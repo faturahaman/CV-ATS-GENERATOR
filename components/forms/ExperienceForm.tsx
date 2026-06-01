@@ -174,6 +174,7 @@ function EntryForm({ initial, onSave, onCancel, language = 'EN' }: EntryFormProp
     cn('h-9', hasError && 'border-destructive focus-visible:ring-destructive/20')
 
   return (
+    <>
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-4 rounded-lg border bg-muted/30 p-4"
@@ -327,26 +328,26 @@ function EntryForm({ initial, onSave, onCancel, language = 'EN' }: EntryFormProp
           {initial ? 'Save Changes' : 'Add Experience'}
         </Button>
       </div>
-
-      {/* AI Generate Experience Modal */}
-      <GenerateExperienceModal
-        open={generateModalOpen}
-        onOpenChange={setGenerateModalOpen}
-        onAccept={handleAcceptGenerated}
-        defaultJobTitle={watch('jobTitle')}
-        defaultCompanyName={watch('companyName')}
-        language={language}
-      />
-
-      {/* AI Improve Experience Modal */}
-      <ImproveExperienceModal
-        open={improveModalOpen}
-        onOpenChange={setImproveModalOpen}
-        originalDescription={watch('description') ?? ''}
-        onAccept={handleAcceptImproved}
-        language={language}
-      />
     </form>
+
+    {/* AI modals rendered OUTSIDE the <form> to prevent event bubbling */}
+    <GenerateExperienceModal
+      open={generateModalOpen}
+      onOpenChange={setGenerateModalOpen}
+      onAccept={handleAcceptGenerated}
+      defaultJobTitle={watch('jobTitle')}
+      defaultCompanyName={watch('companyName')}
+      language={language}
+    />
+
+    <ImproveExperienceModal
+      open={improveModalOpen}
+      onOpenChange={setImproveModalOpen}
+      originalDescription={watch('description') ?? ''}
+      onAccept={handleAcceptImproved}
+      language={language}
+    />
+    </>
   )
 }
 
