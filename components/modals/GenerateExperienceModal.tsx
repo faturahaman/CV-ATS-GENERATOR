@@ -180,13 +180,13 @@ export function GenerateExperienceModal({
             </Field>
 
             <Field
-              label="Technologies Used"
+              label="Tools & Skills Used"
               id="genexp-tech"
-              hint="Comma separated, e.g. React, Next.js, TypeScript"
+              hint="Comma separated, e.g. Excel, Photoshop, Python, AutoCAD"
             >
               <Input
                 id="genexp-tech"
-                placeholder="React, Next.js, TypeScript"
+                placeholder="Excel, Photoshop, Python, AutoCAD..."
                 value={technologies}
                 onChange={(e) => setTechnologies(e.target.value)}
                 disabled={isLoading}

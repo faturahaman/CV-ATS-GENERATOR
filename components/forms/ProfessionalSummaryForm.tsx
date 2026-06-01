@@ -123,7 +123,7 @@ export const ProfessionalSummaryForm = memo(function ProfessionalSummaryForm({
             rows={6}
             value={localValue}
             onChange={handleChange}
-            placeholder="Experienced Frontend Developer with strong knowledge of React, Next.js and TypeScript..."
+            placeholder="Experienced professional with a strong background in... Skilled in... with a proven track record of..."
             maxLength={MAX_LENGTH}
             className={cn(
               'w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm',

@@ -164,7 +164,7 @@ export function GenerateSummaryModal({
             >
               <Input
                 id="gen-skills"
-                placeholder="React, Next.js, TypeScript, Tailwind CSS"
+                placeholder="Communication, Project Management, Excel..."
                 value={skillsRaw}
                 onChange={(e) => setSkillsRaw(e.target.value)}
                 disabled={isLoading}
