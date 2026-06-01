@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useResumeStore } from '@/store/resume-store'
 import { ResumeListView } from '@/components/resume-list/ResumeListView'
+import { Header } from '@/components/layout/Header'
 
 export default function HomePage() {
   const router = useRouter()
@@ -21,18 +22,17 @@ export default function HomePage() {
     deleteResume(id)
   }
 
-  const handleCreateNew = () => {
-    // Navigation to the new resume is handled inside ResumeListView via onEdit
-  }
-
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <ResumeListView
-        onCreateNew={handleCreateNew}
-        onEdit={handleEdit}
-        onDuplicate={handleDuplicate}
-        onDelete={handleDelete}
-      />
-    </main>
+    <>
+      <Header />
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <ResumeListView
+          onCreateNew={() => {}}
+          onEdit={handleEdit}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+        />
+      </main>
+    </>
   )
 }

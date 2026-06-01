@@ -14,12 +14,15 @@ interface SkillsFormProps {
   onChange: (skills: SkillEntry[]) => void
   /** Language forwarded to the AI modal */
   language?: 'EN' | 'ID'
+  /** Job target from personalDetails — forwarded to SuggestSkillsModal */
+  jobTarget?: string
 }
 
 export const SkillsForm = memo(function SkillsForm({
   skills,
   onChange,
   language = 'EN',
+  jobTarget = '',
 }: SkillsFormProps) {
   const [inputValue, setInputValue] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -161,6 +164,7 @@ export const SkillsForm = memo(function SkillsForm({
         open={suggestModalOpen}
         onOpenChange={setSuggestModalOpen}
         onAccept={handleAcceptSuggestions}
+        defaultJobTitle={jobTarget}
         language={language}
       />
     </div>

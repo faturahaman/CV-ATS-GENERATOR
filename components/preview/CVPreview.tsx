@@ -13,27 +13,11 @@ interface CVPreviewProps {
   resume: Resume
 }
 
-// ── Shared inline styles ──────────────────────────────────────────────────────
+// ── Typography constants ──────────────────────────────────────────────────────
 
-const sectionHeaderStyle: React.CSSProperties = {
-  fontSize: '11pt',
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  borderBottom: '1.5px solid #1a1a1a',
-  paddingBottom: '2px',
-  marginBottom: '8px',
-  marginTop: '16px',
-}
+const FONT = 'Arial, Calibri, sans-serif'
 
-const bulletStyle: React.CSSProperties = {
-  margin: '0 0 2px 0',
-  paddingLeft: '0',
-  listStyleType: 'disc',
-  listStylePosition: 'inside',
-}
-
-// ── Helper: format YYYY-MM-DD → "Mon YYYY" ───────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ''
@@ -41,50 +25,129 @@ function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return dateStr
-    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   } catch {
     return dateStr
   }
 }
 
-// ── Helper: split description into bullet lines ───────────────────────────────
-
+/** Split description text into individual bullet lines */
 function descriptionLines(text: string): string[] {
   if (!text?.trim()) return []
   return text
-    .split(/\n|•|-(?=\s)/)
-    .map((l) => l.trim())
+    .split('\n')
+    .map((l) => l.replace(/^[-•*]\s*/, '').trim())
     .filter(Boolean)
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Section header — uppercase, bold, full-width bottom border ────────────────
 
 function SectionHeader({ title }: { title: string }) {
-  return <h2 style={sectionHeaderStyle}>{title}</h2>
+  return (
+    <h2
+      style={{
+        fontFamily: FONT,
+        fontSize: '11pt',
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.3px',
+        margin: '16px 0 4px 0',
+        paddingBottom: '3px',
+        borderBottom: '1.5px solid #1a1a1a',
+        color: '#1a1a1a',
+      }}
+    >
+      {title}
+    </h2>
+  )
 }
+
+// ── Experience section ────────────────────────────────────────────────────────
 
 function ExperienceSection({ entries }: { entries: ExperienceEntry[] }) {
   if (!entries.length) return null
   return (
     <section aria-label="Work Experience">
       <SectionHeader title="Work Experience" />
-      {entries.map((entry) => {
+      {entries.map((entry, idx) => {
         const lines = descriptionLines(entry.description)
+        const dateRange = [formatDate(entry.startDate), formatDate(entry.endDate)]
+          .filter(Boolean)
+          .join(' \u2013 ')
         return (
-          <div key={entry.id} style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <strong style={{ fontSize: '10.5pt' }}>{entry.jobTitle}</strong>
-              <span style={{ fontSize: '9.5pt', color: '#555', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                {formatDate(entry.startDate)} – {formatDate(entry.endDate)}
-              </span>
+          <div
+            key={entry.id}
+            style={{ marginBottom: idx < entries.length - 1 ? '12px' : '0' }}
+          >
+            {/* Job title (bold) + date range (right-aligned) */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                gap: '8px',
+              }}
+            >
+              <strong
+                style={{
+                  fontFamily: FONT,
+                  fontSize: '10.5pt',
+                  fontWeight: 700,
+                  color: '#1a1a1a',
+                }}
+              >
+                {entry.jobTitle}
+              </strong>
+              {dateRange && (
+                <span
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: '9.5pt',
+                    color: '#1a1a1a',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {dateRange}
+                </span>
+              )}
             </div>
-            <div style={{ fontSize: '10pt', color: '#444', marginBottom: '4px' }}>
-              {entry.companyName}
-            </div>
+
+            {/* Company name — italic */}
+            {entry.companyName && (
+              <div
+                style={{
+                  fontFamily: FONT,
+                  fontSize: '10pt',
+                  fontStyle: 'italic',
+                  color: '#1a1a1a',
+                  marginBottom: lines.length > 0 ? '4px' : '0',
+                }}
+              >
+                {entry.companyName}
+              </div>
+            )}
+
+            {/* Bullet points */}
             {lines.length > 0 && (
-              <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <ul
+                style={{
+                  margin: '2px 0 0 0',
+                  paddingLeft: '18px',
+                  listStyleType: 'disc',
+                }}
+              >
                 {lines.map((line, i) => (
-                  <li key={i} style={bulletStyle}>
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: '10pt',
+                      lineHeight: '1.5',
+                      color: '#1a1a1a',
+                      marginBottom: '2px',
+                    }}
+                  >
                     {line}
                   </li>
                 ))}
@@ -96,6 +159,8 @@ function ExperienceSection({ entries }: { entries: ExperienceEntry[] }) {
     </section>
   )
 }
+
+// ── Education section ─────────────────────────────────────────────────────────
 
 function EducationSection({ entries }: { entries: EducationEntry[] }) {
   if (!entries.length) return null
@@ -103,24 +168,75 @@ function EducationSection({ entries }: { entries: EducationEntry[] }) {
     <section aria-label="Education">
       <SectionHeader title="Education" />
       {entries.map((entry) => {
+        const degreeField = [entry.degree, entry.fieldOfStudy].filter(Boolean).join(', ')
         const lines = descriptionLines(entry.description ?? '')
         return (
-          <div key={entry.id} style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <strong style={{ fontSize: '10.5pt' }}>
-                {entry.degree}{entry.fieldOfStudy ? `, ${entry.fieldOfStudy}` : ''}
+          <div key={entry.id} style={{ marginBottom: '8px' }}>
+            {/* Degree + graduation date right-aligned */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                gap: '8px',
+              }}
+            >
+              <strong
+                style={{
+                  fontFamily: FONT,
+                  fontSize: '10.5pt',
+                  fontWeight: 700,
+                  color: '#1a1a1a',
+                }}
+              >
+                {degreeField}
               </strong>
-              <span style={{ fontSize: '9.5pt', color: '#555', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                {formatDate(entry.graduationDate)}
-              </span>
+              <div
+                style={{
+                  fontFamily: FONT,
+                  fontSize: '9.5pt',
+                  color: '#1a1a1a',
+                  textAlign: 'right',
+                  flexShrink: 0,
+                }}
+              >
+                {entry.description?.match(/\d+\.\d+/) && (
+                  <div>Grade: {entry.description.match(/\d+\.\d+/)?.[0]}</div>
+                )}
+                {entry.graduationDate && (
+                  <div>Graduated: {formatDate(entry.graduationDate)}</div>
+                )}
+              </div>
             </div>
-            <div style={{ fontSize: '10pt', color: '#444', marginBottom: '4px' }}>
-              {entry.schoolName}
-            </div>
+
+            {/* School name — italic */}
+            {entry.schoolName && (
+              <div
+                style={{
+                  fontFamily: FONT,
+                  fontSize: '10pt',
+                  fontStyle: 'italic',
+                  color: '#1a1a1a',
+                }}
+              >
+                {entry.schoolName}
+              </div>
+            )}
+
+            {/* Description bullets (if any, excluding grade pattern) */}
             {lines.length > 0 && (
-              <ul style={{ margin: 0, paddingLeft: '16px' }}>
+              <ul style={{ margin: '2px 0 0 0', paddingLeft: '18px', listStyleType: 'disc' }}>
                 {lines.map((line, i) => (
-                  <li key={i} style={bulletStyle}>
+                  <li
+                    key={i}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: '10pt',
+                      lineHeight: '1.5',
+                      color: '#1a1a1a',
+                      marginBottom: '2px',
+                    }}
+                  >
                     {line}
                   </li>
                 ))}
@@ -133,59 +249,84 @@ function EducationSection({ entries }: { entries: EducationEntry[] }) {
   )
 }
 
+// ── Skills section — bullet list ──────────────────────────────────────────────
+
 function SkillsSection({ skills }: { skills: SkillEntry[] }) {
   if (!skills.length) return null
+
+  // Group skills into rows of ~4 for a compact bullet list appearance
+  const CHUNK = 4
+  const rows: SkillEntry[][] = []
+  for (let i = 0; i < skills.length; i += CHUNK) {
+    rows.push(skills.slice(i, i + CHUNK))
+  }
+
   return (
     <section aria-label="Skills">
       <SectionHeader title="Skills" />
-      <p style={{ margin: 0, fontSize: '10pt', lineHeight: '1.6' }}>
-        {skills.map((s) => s.name).join(', ')}
-      </p>
+      <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', listStyleType: 'disc' }}>
+        {rows.map((row, i) => (
+          <li
+            key={i}
+            style={{
+              fontFamily: FONT,
+              fontSize: '10pt',
+              lineHeight: '1.5',
+              color: '#1a1a1a',
+              marginBottom: '2px',
+            }}
+          >
+            {row.map((s) => s.name).join(', ')}
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
+
+// ── Certifications section — bullet list ──────────────────────────────────────
 
 function CertificationsSection({ certs }: { certs: CertificationEntry[] }) {
   if (!certs.length) return null
   return (
     <section aria-label="Certifications">
       <SectionHeader title="Certifications" />
-      {certs.map((cert) => (
-        <div key={cert.id} style={{ marginBottom: '6px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <strong style={{ fontSize: '10.5pt' }}>{cert.certificationName}</strong>
-            <span style={{ fontSize: '9.5pt', color: '#555', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-              {formatDate(cert.issueDate)}
-              {cert.expirationDate ? ` – ${formatDate(cert.expirationDate)}` : ''}
-            </span>
-          </div>
-          <div style={{ fontSize: '10pt', color: '#444' }}>{cert.issuingOrganization}</div>
-        </div>
-      ))}
+      <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px', listStyleType: 'disc' }}>
+        {certs.map((cert) => (
+          <li
+            key={cert.id}
+            style={{
+              fontFamily: FONT,
+              fontSize: '10pt',
+              lineHeight: '1.5',
+              color: '#1a1a1a',
+              marginBottom: '2px',
+            }}
+          >
+            {cert.certificationName}
+            {cert.issuingOrganization ? ` — ${cert.issuingOrganization}` : ''}
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-/**
- * ATS-friendly CV preview.
- *
- * Rules enforced:
- * - Single column layout
- * - No images or icons
- * - Plain text only — no decorative symbols
- * - Standard sans-serif typography via inline styles so the output
- *   is independent of the app's Tailwind theme
- * - Updates immediately when the resume prop changes (debouncing is
- *   handled by the parent via useMemo / useCallback)
- */
 export const CVPreview = memo(function CVPreview({ resume }: CVPreviewProps) {
   const { personalDetails: pd } = resume
 
-  const hasName = pd.fullName?.trim()
-  const hasContact = pd.email || pd.phoneNumber || pd.country || pd.cityState
-  const hasLinks = pd.linkedinUrl || pd.githubUrl || pd.portfolioUrl
+  const fullName = [pd.fullName, pd.lastName].filter(Boolean).join(' ')
+  const hasName = fullName.trim().length > 0
+  const contactParts = [pd.email, pd.phoneNumber, pd.cityState, pd.country].filter(Boolean)
+  const linkParts = [
+    pd.linkedinUrl,
+    pd.githubUrl && `github.com/${pd.githubUrl.replace(/.*github\.com\//i, '')}`,
+    pd.portfolioUrl,
+  ].filter(Boolean) as string[]
+  const contactLine = [...contactParts, ...linkParts].join(' | ')
+
   const hasSummary = resume.professionalSummary?.trim()
   const hasExperience = resume.experience.length > 0
   const hasEducation = resume.education.length > 0
@@ -194,8 +335,7 @@ export const CVPreview = memo(function CVPreview({ resume }: CVPreviewProps) {
 
   const isEmpty =
     !hasName &&
-    !hasContact &&
-    !hasLinks &&
+    !contactLine &&
     !hasSummary &&
     !hasExperience &&
     !hasEducation &&
@@ -204,16 +344,14 @@ export const CVPreview = memo(function CVPreview({ resume }: CVPreviewProps) {
 
   return (
     <div
-      // Intentionally using inline styles so the preview looks the same
-      // regardless of the surrounding Tailwind theme.
       style={{
-        fontFamily: 'Arial, Calibri, "Times New Roman", sans-serif',
-        fontSize: '11pt',
+        fontFamily: FONT,
+        fontSize: '10.5pt',
         lineHeight: '1.5',
         color: '#1a1a1a',
         backgroundColor: '#ffffff',
-        padding: '40px 48px',
-        maxWidth: '680px',
+        padding: '36px 48px 48px',
+        maxWidth: '700px',
         margin: '0 auto',
         minHeight: '400px',
       }}
@@ -228,102 +366,91 @@ export const CVPreview = memo(function CVPreview({ resume }: CVPreviewProps) {
             fontSize: '10pt',
             textAlign: 'center',
             marginTop: '80px',
+            fontFamily: FONT,
           }}
         >
           Start filling in your details to see the preview.
         </p>
       )}
 
-      {/* ── Header: Full Name + Job Target ── */}
+      {/* ── Header: Full Name (centered, bold, large) ── */}
       {hasName && (
-        <div style={{ marginBottom: '4px' }}>
-          <h1
-            style={{
-              fontSize: '20pt',
-              fontWeight: 700,
-              margin: 0,
-              letterSpacing: '-0.3px',
-            }}
-          >
-            {pd.fullName}
-            {pd.lastName ? ` ${pd.lastName}` : ''}
-          </h1>
-
-          {pd.jobTarget && (
-            <p
-              style={{
-                fontSize: '11pt',
-                fontWeight: 500,
-                margin: '2px 0 0',
-                color: '#444',
-              }}
-            >
-              {pd.jobTarget}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ── Contact line ── */}
-      {hasContact && (
-        <div
+        <h1
           style={{
-            marginTop: '8px',
-            fontSize: '9.5pt',
-            color: '#555',
-            borderBottom: '1px solid #ccc',
-            paddingBottom: '6px',
-            marginBottom: hasLinks ? '4px' : '12px',
+            fontFamily: FONT,
+            fontSize: '20pt',
+            fontWeight: 700,
+            textAlign: 'center',
+            margin: '0 0 4px 0',
+            letterSpacing: '0.5px',
+            color: '#1a1a1a',
+            textTransform: 'uppercase',
           }}
         >
-          {[pd.email, pd.phoneNumber, pd.cityState, pd.country]
-            .filter(Boolean)
-            .join('  |  ')}
-        </div>
+          {fullName}
+        </h1>
       )}
 
-      {/* ── Links ── */}
-      {hasLinks && (
-        <div
+      {/* ── Job Target (centered, normal weight) ── */}
+      {pd.jobTarget && (
+        <p
           style={{
-            fontSize: '9.5pt',
-            color: '#555',
-            marginBottom: '12px',
-            borderBottom: '1px solid #ccc',
-            paddingBottom: '6px',
+            fontFamily: FONT,
+            fontSize: '11pt',
+            fontWeight: 400,
+            textAlign: 'center',
+            margin: '0 0 4px 0',
+            color: '#1a1a1a',
           }}
         >
-          {[
-            pd.linkedinUrl && `LinkedIn: ${pd.linkedinUrl}`,
-            pd.githubUrl && `GitHub: ${pd.githubUrl}`,
-            pd.portfolioUrl && `Portfolio: ${pd.portfolioUrl}`,
-          ]
-            .filter(Boolean)
-            .join('  |  ')}
-        </div>
+          {pd.jobTarget}
+        </p>
+      )}
+
+      {/* ── Contact + Links (centered, single line) ── */}
+      {contactLine && (
+        <p
+          style={{
+            fontFamily: FONT,
+            fontSize: '9.5pt',
+            textAlign: 'center',
+            margin: '0 0 8px 0',
+            color: '#1a1a1a',
+          }}
+        >
+          {contactLine}
+        </p>
       )}
 
       {/* ── Professional Summary ── */}
       {hasSummary && (
         <section aria-label="Professional Summary">
           <SectionHeader title="Professional Summary" />
-          <p style={{ margin: 0, fontSize: '10.5pt', lineHeight: '1.6' }}>
+          <p
+            style={{
+              fontFamily: FONT,
+              fontSize: '10pt',
+              lineHeight: '1.6',
+              margin: '4px 0 0 0',
+              color: '#1a1a1a',
+            }}
+          >
             {resume.professionalSummary}
           </p>
         </section>
       )}
 
       {/* ── Work Experience ── */}
-      <ExperienceSection entries={resume.experience} />
+      {hasExperience && <ExperienceSection entries={resume.experience} />}
 
       {/* ── Education ── */}
-      <EducationSection entries={resume.education} />
+      {hasEducation && <EducationSection entries={resume.education} />}
 
       {/* ── Skills ── */}
-      <SkillsSection skills={resume.skills} />
+      {hasSkills && <SkillsSection skills={resume.skills} />}
 
       {/* ── Certifications ── */}
-      <CertificationsSection certs={resume.certifications} />
+      {hasCertifications && <CertificationsSection certs={resume.certifications} />}
     </div>
   )
 })

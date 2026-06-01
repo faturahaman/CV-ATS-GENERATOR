@@ -48,24 +48,24 @@ export default function ResumeEditorPage() {
 
   return (
     <main className="flex min-h-[calc(100vh-3.5rem)] flex-col">
-      {/* Editor header */}
-      <div className="sticky top-14 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-12 w-full max-w-screen-xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-          <Button variant="ghost" size="sm" asChild>
+      {/* Editor header — compact on mobile */}
+      <div className="sticky top-14 z-30 mt-12 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-11 w-full max-w-screen-xl items-center gap-2 px-3 sm:h-12 sm:gap-3 sm:px-6 lg:px-8">
+          <Button variant="ghost" size="sm" asChild className="shrink-0 px-2 sm:px-3">
             <Link href="/">
-              <ArrowLeft />
-              Resumes
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Resumes</span>
             </Link>
           </Button>
 
           <div className="h-4 w-px bg-border" aria-hidden />
 
-          <h1 className="truncate text-sm font-medium">{resume.title}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-sm font-medium">{resume.title}</h1>
         </div>
       </div>
 
-      {/* Editor body */}
-      <div className="mx-auto w-full max-w-screen-xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      {/* Editor body — tighter padding on mobile */}
+      <div className="mx-auto w-full max-w-screen-xl flex-1 px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
         <EditorLayout resumeId={id} />
       </div>
     </main>

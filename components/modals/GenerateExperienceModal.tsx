@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -21,14 +22,11 @@ type Step = 'form' | 'result'
 interface GenerateExperienceModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /**
-   * Called when the user accepts the generated bullet points.
-   * The caller is responsible for appending to the existing description.
-   */
+  /** Called when the user accepts the generated bullet points */
   onAccept: (bulletPoints: string) => void
-  /** Pre-fill job title from the entry form (optional) */
+  /** Job title already entered in the experience form */
   defaultJobTitle?: string
-  /** Pre-fill company name from the entry form (optional) */
+  /** Company name already entered in the experience form */
   defaultCompanyName?: string
   /** Language passed to the AI API */
   language?: 'EN' | 'ID'
@@ -39,31 +37,19 @@ interface GenerateExperienceModalProps {
 interface FieldProps {
   label: string
   id: string
-  required?: boolean
-  error?: string
   hint?: string
   children: React.ReactNode
 }
 
-function Field({ label, id, required, error, hint, children }: FieldProps) {
+function Field({ label, id, hint, children }: FieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium leading-none">
         {label}
-        {required && (
-          <span className="ml-0.5 text-destructive" aria-hidden>
-            *
-          </span>
-        )}
       </label>
       {children}
-      {hint && !error && (
+      {hint && (
         <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
-      {error && (
-        <p id={`${id}-error`} role="alert" className="text-xs text-destructive">
-          {error}
-        </p>
       )}
     </div>
   )
@@ -79,14 +65,11 @@ export function GenerateExperienceModal({
   defaultCompanyName = '',
   language = 'EN',
 }: GenerateExperienceModalProps) {
-  // ── Form state ─────────────────────────────────────────────────────────────
-  const [jobTitle, setJobTitle] = useState(defaultJobTitle)
-  const [companyName, setCompanyName] = useState(defaultCompanyName)
+  // Only ask for the extra context not already in the form
   const [industry, setIndustry] = useState('')
   const [technologies, setTechnologies] = useState('')
-  const [jobTitleError, setJobTitleError] = useState<string | null>(null)
 
-  // ── Async state ────────────────────────────────────────────────────────────
+  // Async state
   const [step, setStep] = useState<Step>('form')
   const [isLoading, setIsLoading] = useState(false)
   const [generatedBullets, setGeneratedBullets] = useState('')
@@ -96,24 +79,21 @@ export function GenerateExperienceModal({
 
   const buildJobContext = useCallback((): string => {
     const parts: string[] = []
-    if (jobTitle.trim()) parts.push(`Job Title: ${jobTitle.trim()}`)
-    if (companyName.trim()) parts.push(`Company: ${companyName.trim()}`)
+    if (defaultJobTitle.trim()) parts.push(`Job Title: ${defaultJobTitle.trim()}`)
+    if (defaultCompanyName.trim()) parts.push(`Company: ${defaultCompanyName.trim()}`)
     if (industry.trim()) parts.push(`Industry: ${industry.trim()}`)
     if (technologies.trim()) parts.push(`Technologies: ${technologies.trim()}`)
     return parts.join(', ')
-  }, [jobTitle, companyName, industry, technologies])
+  }, [defaultJobTitle, defaultCompanyName, industry, technologies])
 
   const resetForm = useCallback(() => {
-    setJobTitle(defaultJobTitle)
-    setCompanyName(defaultCompanyName)
     setIndustry('')
     setTechnologies('')
-    setJobTitleError(null)
     setStep('form')
     setGeneratedBullets('')
     setApiError(null)
     setIsLoading(false)
-  }, [defaultJobTitle, defaultCompanyName])
+  }, [])
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -147,14 +127,9 @@ export function GenerateExperienceModal({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
-      if (!jobTitle.trim()) {
-        setJobTitleError('Job title is required')
-        return
-      }
-      setJobTitleError(null)
       callGenerate()
     },
-    [jobTitle, callGenerate]
+    [callGenerate]
   )
 
   const handleRegenerate = useCallback(() => {
@@ -178,45 +153,26 @@ export function GenerateExperienceModal({
             <Sparkles className="h-4 w-4 text-primary" />
             Generate Experience with AI
           </DialogTitle>
+
+          {/* Show the context already taken from the form */}
+          {(defaultJobTitle || defaultCompanyName) && (
+            <DialogDescription>
+              Generating for{' '}
+              <span className="font-medium text-foreground">
+                {[defaultJobTitle, defaultCompanyName].filter(Boolean).join(' @ ')}
+              </span>
+              . Add optional details below to improve the result.
+            </DialogDescription>
+          )}
         </DialogHeader>
 
-        {/* ── Step 1: Input form ── */}
+        {/* ── Step 1: Extra context form ── */}
         {step === 'form' && (
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-            <Field
-              label="Job Title"
-              id="genexp-jobTitle"
-              required
-              error={jobTitleError ?? undefined}
-            >
-              <Input
-                id="genexp-jobTitle"
-                placeholder="Frontend Developer"
-                value={jobTitle}
-                onChange={(e) => {
-                  setJobTitle(e.target.value)
-                  if (jobTitleError) setJobTitleError(null)
-                }}
-                aria-invalid={!!jobTitleError}
-                aria-describedby={jobTitleError ? 'genexp-jobTitle-error' : undefined}
-                disabled={isLoading}
-              />
-            </Field>
-
-            <Field label="Company Name" id="genexp-company">
-              <Input
-                id="genexp-company"
-                placeholder="PT Example"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                disabled={isLoading}
-              />
-            </Field>
-
             <Field label="Industry" id="genexp-industry">
               <Input
                 id="genexp-industry"
-                placeholder="E-commerce, Fintech, SaaS..."
+                placeholder="E-commerce, Fintech, Government..."
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 disabled={isLoading}

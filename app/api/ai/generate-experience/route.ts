@@ -1,40 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callOpenRouter } from '@/lib/openrouter'
+import { cleanAIOutput } from '@/lib/ai-output-cleaner'
+import {
+  validateLanguage,
+  validateString,
+  sanitiseForPrompt,
+  genericErrorBody,
+  INPUT_LIMITS,
+} from '@/lib/api-validation'
 
 export async function POST(request: NextRequest) {
+  const contentType = request.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    return NextResponse.json({ error: 'Content-Type must be application/json' }, { status: 415 })
+  }
+
   try {
     const body = await request.json()
-    const { jobContext, language } = body
 
-    if (!jobContext || !language) {
-      return NextResponse.json(
-        { error: 'Missing required fields: jobContext, language' },
-        { status: 400 }
-      )
+    const language = validateLanguage(body.language)
+    if (!language) {
+      return NextResponse.json({ error: "Invalid language. Must be 'EN' or 'ID'" }, { status: 400 })
     }
 
-    const prompt = `Generate 3-5 professional bullet points for this job context: ${jobContext}. Make them ATS-friendly, action-oriented, and impactful. Return as a JSON array of strings only, no markdown fences, no explanation. Language: ${language}`
-
-    const rawText = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 600 })
-
-    let bulletPoints: string[]
-    try {
-      const cleaned = rawText.replace(/```(?:json)?\n?/g, '').replace(/```/g, '').trim()
-      bulletPoints = JSON.parse(cleaned)
-      if (!Array.isArray(bulletPoints)) throw new Error('Not an array')
-    } catch {
-      bulletPoints = rawText
-        .split('\n')
-        .map((line: string) => line.replace(/^[-•*\d.]\s*/, '').trim())
-        .filter((line: string) => line.length > 0)
+    const jobContext = validateString(body.jobContext, INPUT_LIMITS.JOB_CONTEXT)
+    if (!jobContext) {
+      return NextResponse.json({ error: `Missing or invalid jobContext (max ${INPUT_LIMITS.JOB_CONTEXT} characters)` }, { status: 400 })
     }
+
+    const safeJobContext = sanitiseForPrompt(jobContext)
+
+    const prompt = `You are an ATS resume expert.
+Generate resume achievement bullets.
+
+INPUT
+${safeJobContext}
+
+Language: ${language}
+
+Requirements:
+- Generate 4-6 achievement bullets
+- Every bullet must start with a strong action verb
+- Every bullet must include measurable impact
+- Include metrics whenever possible
+- Follow XYZ Formula: Accomplished X as measured by Y by doing Z
+
+Good examples:
+Increased application performance by 35% through code splitting and lazy loading.
+Reduced deployment time by 50% by implementing CI/CD automation.
+Improved API response speed by 25% through database query optimization.
+
+Include:
+- technical skills
+- business impact
+- ownership
+- collaboration
+
+Avoid:
+- responsible for
+- worked on
+- helped with
+- involved in
+- assisted with
+
+CRITICAL OUTPUT RULES:
+- Plain text only
+- One bullet per line
+- No markdown
+- No asterisks
+- No numbering
+- No headings
+- No explanations
+- No bullet prefixes (no -, •, *)
+
+Return only achievement statements.`
+
+    const raw = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 600 })
+    const cleaned = cleanAIOutput(raw)
+
+    // Split into array of non-empty lines
+    const bulletPoints = cleaned
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
 
     return NextResponse.json({ bulletPoints })
   } catch (error) {
-    console.error('Error in generate-experience route:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    )
+    const message = error instanceof Error ? error.message : String(error)
+    return NextResponse.json(genericErrorBody(message), { status: 500 })
   }
 }

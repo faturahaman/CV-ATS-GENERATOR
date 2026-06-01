@@ -167,21 +167,22 @@ export const FormPanel = memo(function FormPanel({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Sticky section navigation tabs */}
+      {/* Sticky section navigation tabs — horizontally scrollable on mobile */}
       <nav
         aria-label="Form sections"
-        className="sticky top-0 z-10 flex flex-wrap gap-1 border-b bg-background px-2 py-2"
+        className="sticky top-0 z-10 flex gap-1 overflow-x-auto border-b bg-background px-2 py-2 scrollbar-none"
+        style={{ scrollbarWidth: 'none' }}
       >
         {sectionTabs.map(({ id, label, icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => scrollToSection(id)}
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={label}
           >
             {icon}
-            <span className="hidden sm:inline">{label}</span>
+            <span>{label}</span>
           </button>
         ))}
       </nav>
