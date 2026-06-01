@@ -9,7 +9,6 @@ import {
   improveSummary,
   generateExperience,
   improveExperience,
-  improveEducation,
   suggestSkills,
   calculateATSScore,
   AIClientError,
@@ -160,34 +159,6 @@ describe('AI Client', () => {
           method: 'POST',
           body: JSON.stringify({
             description: 'Worked on projects',
-            language: 'EN',
-          }),
-        })
-      );
-
-      expect(result).toBe(mockResponse.improvedDescription);
-    });
-  });
-
-  describe('improveEducation', () => {
-    it('should call the improve-education endpoint with correct parameters', async () => {
-      const mockResponse = {
-        improvedDescription: 'Bachelor of Science in Computer Science',
-      };
-
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      const result = await improveEducation('Studied computer science', 'EN');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/ai/improve-education',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({
-            description: 'Studied computer science',
             language: 'EN',
           }),
         })

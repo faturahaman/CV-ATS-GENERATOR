@@ -131,7 +131,7 @@ function MobileTabButton({ active, onClick, icon, label, badge }: MobileTabButto
       type="button"
       onClick={onClick}
       className={cn(
-        'relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all',
+        'relative flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all duration-200 ease-out',
         active
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground'

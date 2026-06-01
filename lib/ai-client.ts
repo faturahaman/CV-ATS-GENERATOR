@@ -156,27 +156,6 @@ export async function improveExperience(
   }
 }
 
-export async function improveEducation(
-  description: string,
-  language: 'EN' | 'ID' = 'EN'
-): Promise<string> {
-  try {
-    const response = await fetch(API_ENDPOINTS.IMPROVE_EDUCATION, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description, language }),
-    })
-    if (!response.ok) handleAPIError(response, 'Failed to improve education')
-    const data = await response.json()
-    if (isErrorResponse(data)) throw new AIClientError(data.error, data.code ?? 'IMPROVE_EDUCATION_ERROR', data.retryable ?? false)
-    if (!data.improvedDescription || typeof data.improvedDescription !== 'string') throw new AIClientError('Invalid response format: missing improvedDescription', 'INVALID_RESPONSE')
-    return data.improvedDescription
-  } catch (error) {
-    if (error instanceof AIClientError) throw error
-    handleAPIError(error, 'Failed to improve education')
-  }
-}
-
 export async function suggestSkills(
   jobTitle: string,
   language: 'EN' | 'ID' = 'EN'

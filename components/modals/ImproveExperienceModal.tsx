@@ -144,7 +144,7 @@ function ImproveExperienceContent({
       {/* ── Result ── */}
       {state.step === 'result' && (
         <>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-out">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Current
             </p>

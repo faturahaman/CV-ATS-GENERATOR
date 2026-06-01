@@ -39,12 +39,13 @@ ${safeJobContext}
 Language: ${language}
 
 Requirements:
-- Generate 4-6 achievement bullets
+- Generate max 4 point
 - Every bullet must start with a strong action verb
 - Every bullet must include measurable impact
 - Include metrics whenever possible
 - Follow XYZ Formula: Accomplished X as measured by Y by doing Z
 - Maximum Character 4 point and make sure it the word is dense and also containd 
+- Never Lie and do too much if the User is Not Relevan
 
 Good examples:
 Increased application performance by 35% through code splitting and lazy loading.

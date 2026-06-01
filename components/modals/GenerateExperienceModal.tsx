@@ -231,7 +231,7 @@ export function GenerateExperienceModal({
 
         {/* ── Step 2: Result review ── */}
         {step === 'result' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-out">
             <ul
               className="max-h-56 overflow-y-auto rounded-md border bg-muted/30 px-5 py-3 flex flex-col gap-1.5 list-disc"
               aria-label="Generated experience bullet points"

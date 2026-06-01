@@ -318,7 +318,7 @@ export function exportToPDF(resume: Resume): void {
         [26, 26, 26]
       )
 
-      // Company name — italic, below
+      // Company name 
       if (exp.companyName) {
         w.line(exp.companyName, SIZE.bodySmall, LH.bodySmall, 'italic', [26, 26, 26])
       }
@@ -329,7 +329,7 @@ export function exportToPDF(resume: Resume): void {
         for (const dl of lines) {
           w.wrappedText(`\u2022 ${dl}`, SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26], 4)
         }
-      }
+      } 
     }
   }
 

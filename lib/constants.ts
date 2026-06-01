@@ -156,7 +156,6 @@ export const API_ENDPOINTS = {
   IMPROVE_SUMMARY: '/api/ai/improve-summary',
   GENERATE_EXPERIENCE: '/api/ai/generate-experience',
   IMPROVE_EXPERIENCE: '/api/ai/improve-experience',
-  IMPROVE_EDUCATION: '/api/ai/improve-education',
   SUGGEST_SKILLS: '/api/ai/suggest-skills',
   CALCULATE_ATS_SCORE: '/api/ai/calculate-ats-score',
 } as const;

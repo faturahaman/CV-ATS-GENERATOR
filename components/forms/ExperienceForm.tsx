@@ -4,7 +4,29 @@ import { memo, useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X, Sparkles, Wand2 } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DropAnimation,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X, Sparkles, Wand2, GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -363,9 +385,39 @@ function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
   const [expanded, setExpanded] = useState(false)
   const dateRange = `${formatDisplayDate(entry.startDate)} – ${formatDisplayDate(entry.endDate)}`
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
   return (
-    <div className="rounded-lg border bg-background">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn('rounded-lg border bg-background', isDragging && 'shadow-lg')}
+    >
       <div className="flex items-start justify-between gap-2 px-4 py-3">
+        {/* Drag handle */}
+        <button
+          type="button"
+          className="flex shrink-0 self-center cursor-grab touch-none items-center text-muted-foreground/40 hover:text-muted-foreground active:cursor-grabbing"
+          aria-label="Drag to reorder"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+
         <button
           type="button"
           className="flex flex-1 flex-col gap-0.5 text-left"
@@ -438,6 +490,27 @@ export const ExperienceForm = memo(function ExperienceForm({
   // null = no form open; 'new' = adding; string id = editing that entry
   const [editingId, setEditingId] = useState<string | null>(null)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (over && active.id !== over.id) {
+        const oldIndex = entries.findIndex((e) => e.id === active.id)
+        const newIndex = entries.findIndex((e) => e.id === over.id)
+        onChange(arrayMove(entries, oldIndex, newIndex))
+      }
+    },
+    [entries, onChange]
+  )
+
   const handleSave = useCallback(
     (entry: ExperienceEntry) => {
       if (editingId === 'new') {
@@ -467,24 +540,34 @@ export const ExperienceForm = memo(function ExperienceForm({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Entry list */}
-      {entries.map((entry) =>
-        editingId === entry.id ? (
-          <EntryForm
-            key={entry.id}
-            initial={entry}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
-        ) : (
-          <EntryCard
-            key={entry.id}
-            entry={entry}
-            onEdit={() => handleEdit(entry.id)}
-            onDelete={() => handleDelete(entry.id)}
-          />
-        )
-      )}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={entries.map((e) => e.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {entries.map((entry) =>
+            editingId === entry.id ? (
+              <EntryForm
+                key={entry.id}
+                initial={entry}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            ) : (
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                onEdit={() => handleEdit(entry.id)}
+                onDelete={() => handleDelete(entry.id)}
+              />
+            )
+          )}
+        </SortableContext>
+      </DndContext>
 
       {/* Add new form */}
       {editingId === 'new' && (

@@ -29,32 +29,87 @@ export async function POST(request: NextRequest) {
 
     const safeJobTitle = sanitiseForPrompt(jobTitle)
 
-    const prompt = `You are an ATS optimization expert.
-Generate skills for this role.
+  const prompt = `
+You are an elite ATS resume optimization expert and recruiter.
+
+Generate the most relevant resume skills for the following role.
 
 INPUT
-Job Title: ${safeJobTitle}
-Language: ${language}
+
+Job Title:
+${safeJobTitle}
+
+Language:
+${language}
 
 Requirements:
-- Suggest hard skills (technical)
-- Suggest soft skills (interpersonal)
-- Suggest tools and technologies
+
+- Generate skills commonly found in real job descriptions
+- Prioritize ATS keywords used by recruiters
+- Prioritize skills that improve candidate-job matching
+- Include a balanced mix of:
+  - Hard skills
+  - Soft skills
+  - Tools
+  - Methodologies
+  - Industry-relevant competencies
+
+- Focus on skills that increase interview potential
+- Focus on modern and relevant skills
 - Total: 10-15 skills
 
-Prioritize:
-- ATS keywords commonly found in job descriptions
-- Common recruiter requirements
-- Modern industry skills
+Guidelines:
+
+- Infer the most likely industry and role requirements from the job title
+- Include role-specific competencies
+- Include transferable professional skills when appropriate
+- Include commonly requested recruiter keywords
 
 Avoid:
-- duplicate skills
-- outdated skills
-- generic non-skills
 
-Return valid JSON only. No markdown. No explanation. No code fences.
+- Duplicate skills
+- Outdated skills
+- Generic personality traits
+- Buzzwords without professional value
 
-{"skills":["Skill1","Skill2","Skill3"]}`
+Examples of bad output:
+
+- Hardworking
+- Dedicated
+- Friendly
+- Honest
+- Nice Person
+
+Examples of good output:
+
+- Project Management
+- Customer Relationship Management
+- Financial Reporting
+- Digital Marketing
+- Data Analysis
+- Communication
+- Stakeholder Management
+- Problem Solving
+
+CRITICAL OUTPUT RULES:
+
+- Return valid JSON only
+- Do not return markdown
+- Do not return explanations
+- Do not return code fences
+- Do not return headings
+- Do not return additional text
+
+Response format:
+
+{
+  "skills": [
+    "Skill 1",
+    "Skill 2",
+    "Skill 3"
+  ]
+}
+`
 
     const rawText = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 400 })
 

@@ -64,7 +64,7 @@ const CategoryBar = memo(function CategoryBar({ label, score }: { label: string;
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+          className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
           style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
           role="progressbar"
           aria-valuenow={score}
@@ -194,7 +194,7 @@ export const ATSScoreDisplay = memo(function ATSScoreDisplay({ resume, language,
 
       {/* Score results */}
       {scoreData && !isLoading && (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 animate-in fade-in-0 slide-in-from-bottom-2 duration-300 ease-out">
           {/* Overall score — editorial style */}
           <div className="flex items-center justify-between rounded-lg border border-border bg-card px-5 py-4">
             <div className="flex flex-col gap-0.5">

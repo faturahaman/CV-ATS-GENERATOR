@@ -60,10 +60,6 @@ export interface ImproveExperienceResponse {
   improvedDescription: string;
 }
 
-export interface ImproveEducationResponse {
-  improvedDescription: string;
-}
-
 export interface SuggestSkillsResponse {
   skills: string[];
 }
@@ -327,33 +323,6 @@ export function useAI() {
   );
 
   /**
-   * Improve education descriptions using AI
-   * 
-   * Validates: Requirement 17
-   */
-  const improveEducation = useCallback(
-    async (description: string, language: 'EN' | 'ID' = 'EN') => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const response = await callAPI<ImproveEducationResponse>(
-          API_ENDPOINTS.IMPROVE_EDUCATION,
-          {
-            description,
-            language,
-          }
-        );
-
-        return response.improvedDescription;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [callAPI]
-  );
-
-  /**
    * Suggest skills based on job title using AI
    * 
    * Validates: Requirement 20
@@ -424,7 +393,6 @@ export function useAI() {
     improveSummary,
     generateExperience,
     improveExperience,
-    improveEducation,
     suggestSkills,
     calculateATSScore,
     clearError,

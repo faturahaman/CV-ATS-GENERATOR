@@ -2,6 +2,60 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* ── Smooth animation overrides ─────────────────────────────────────────────── */
+
+/* Smoother easing for all Radix animate-in / animate-out */
+@keyframes smooth-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes smooth-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes smooth-zoom-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes smooth-zoom-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}
+
+@keyframes smooth-slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes smooth-slide-up {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes smooth-fade-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Overlay backdrop transition */
+[data-slot="dialog-overlay"] {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dialog content — smooth spring-like entrance */
+[data-slot="dialog-content"] {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Dropdown content — gentle ease */
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"] {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -56,7 +110,7 @@
   --card-foreground: oklch(0.18 0.005 85);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.005 85);
-  --primary: oklch(0.42 0.13 145);             /* Medium green #1a8917 */
+  --primary: oklch(0.18 0.005 85);             /* Medium black — buttons, links, accents */
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.96 0.004 85);
   --secondary-foreground: oklch(0.18 0.005 85);
@@ -67,8 +121,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.9 0.005 85);               /* warm light border */
   --input: oklch(0.9 0.005 85);
-  --ring: oklch(0.42 0.13 145);                /* green ring */
-  --chart-1: oklch(0.42 0.13 145);
+  --ring: oklch(0.18 0.005 85);                /* black ring */
+  --chart-1: oklch(0.18 0.005 85);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
@@ -76,12 +130,12 @@
   --radius: 0.375rem;                          /* slightly tighter radius */
   --sidebar: oklch(0.97 0.004 85);
   --sidebar-foreground: oklch(0.18 0.005 85);
-  --sidebar-primary: oklch(0.42 0.13 145);
+  --sidebar-primary: oklch(0.18 0.005 85);
   --sidebar-primary-foreground: oklch(0.99 0 0);
   --sidebar-accent: oklch(0.96 0.004 85);
   --sidebar-accent-foreground: oklch(0.18 0.005 85);
   --sidebar-border: oklch(0.9 0.005 85);
-  --sidebar-ring: oklch(0.42 0.13 145);
+  --sidebar-ring: oklch(0.18 0.005 85);
   --font-heading: Georgia, 'Times New Roman', serif;
 }
 
@@ -92,8 +146,8 @@
   --card-foreground: oklch(0.95 0.004 85);
   --popover: oklch(0.21 0.005 85);
   --popover-foreground: oklch(0.95 0.004 85);
-  --primary: oklch(0.55 0.14 145);
-  --primary-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.95 0.004 85);             /* near-white for dark mode */
+  --primary-foreground: oklch(0.18 0.005 85);
   --secondary: oklch(0.26 0.005 85);
   --secondary-foreground: oklch(0.95 0.004 85);
   --muted: oklch(0.26 0.005 85);
@@ -103,20 +157,20 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.55 0.14 145);
-  --chart-1: oklch(0.55 0.14 145);
+  --ring: oklch(0.95 0.004 85);
+  --chart-1: oklch(0.95 0.004 85);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.21 0.005 85);
   --sidebar-foreground: oklch(0.95 0.004 85);
-  --sidebar-primary: oklch(0.55 0.14 145);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary: oklch(0.95 0.004 85);
+  --sidebar-primary-foreground: oklch(0.18 0.005 85);
   --sidebar-accent: oklch(0.26 0.005 85);
   --sidebar-accent-foreground: oklch(0.95 0.004 85);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.55 0.14 145);
+  --sidebar-ring: oklch(0.95 0.004 85);
 }
 
 @layer base {
@@ -125,9 +179,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Smoother font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans;
+    /* Smooth scroll for any anchor navigation */
+    scroll-behavior: smooth;
   }
   h1, h2, h3 {
     font-family: var(--font-heading);

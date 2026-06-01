@@ -193,7 +193,7 @@ export function GenerateSummaryModal({
         )}
 
         {step === 'result' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-out">
             <div
               className={cn('rounded-md border bg-muted/30 px-3 py-3 text-sm leading-relaxed', 'max-h-48 overflow-y-auto')}
               aria-label="Generated summary"

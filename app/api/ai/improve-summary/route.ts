@@ -46,7 +46,7 @@ Requirements:
 - Keep professional tone
 - Keep concise and factual
 - Do not use first person pronouns
-- 50-120 words
+- max 500 character
 
 Avoid:
 - generic statements

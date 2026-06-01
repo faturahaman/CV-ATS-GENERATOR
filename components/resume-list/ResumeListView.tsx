@@ -70,7 +70,7 @@ export function ResumeListView({
 
       {/* Empty state */}
       {resumes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
+        <div className="flex flex-col items-center justify-center gap-6 py-24 text-center animate-in fade-in-0 slide-in-from-bottom-3 duration-400 ease-out">
           <div className="flex size-16 items-center justify-center rounded-full bg-muted">
             <FileText className="size-7 text-muted-foreground" />
           </div>
@@ -96,14 +96,19 @@ export function ResumeListView({
       ) : (
         /* Resume list — Medium-style article list */
         <div className="flex flex-col divide-y divide-border/60">
-          {resumes.map((resume) => (
-            <ResumeCard
+          {resumes.map((resume, idx) => (
+            <div
               key={resume.id}
-              resume={resume}
-              onEdit={() => onEdit(resume.id)}
-              onDuplicate={() => onDuplicate(resume.id)}
-              onDelete={() => onDelete(resume.id)}
-            />
+              className="animate-in fade-in-0 slide-in-from-bottom-2 ease-out"
+              style={{ animationDuration: '300ms', animationDelay: `${idx * 40}ms`, animationFillMode: 'both' }}
+            >
+              <ResumeCard
+                resume={resume}
+                onEdit={() => onEdit(resume.id)}
+                onDuplicate={() => onDuplicate(resume.id)}
+                onDelete={() => onDelete(resume.id)}
+              />
+            </div>
           ))}
         </div>
       )}

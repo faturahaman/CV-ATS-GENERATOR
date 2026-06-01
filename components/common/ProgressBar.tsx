@@ -42,7 +42,7 @@ export const ProgressBar = memo(function ProgressBar({
       {/* Bar */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+          className={`h-full rounded-full transition-all duration-500 ease-out ${barColor}`}
           style={{ width: `${clamped}%` }}
           role="progressbar"
           aria-valuenow={clamped}

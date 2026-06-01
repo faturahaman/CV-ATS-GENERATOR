@@ -52,7 +52,7 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
             href="https://saweria.co/faturahdev"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-all duration-150 ease-out hover:scale-[1.02] active:scale-[0.98]"
           >
             <Coffee className="size-4" />
             Support Development
@@ -62,7 +62,7 @@ export function SupportModal({ open, onOpenChange }: SupportModalProps) {
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-150 ease-out"
           >
             Maybe later
           </button>

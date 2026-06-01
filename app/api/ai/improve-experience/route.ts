@@ -43,6 +43,7 @@ Requirements:
 - Increase ATS keyword relevance
 - Add measurable outcomes where appropriate (use XYZ Formula: Accomplished X as measured by Y by doing Z)
 - Use strong action verbs
+- max 4 points 
 - Improve clarity
 - Remove fluff and repetitive wording
 - Keep realistic

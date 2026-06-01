@@ -167,7 +167,7 @@ export function SuggestSkillsModal({
 
         {/* ── Step 2: Selectable skill tags ── */}
         {step === 'result' && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 animate-in fade-in-0 slide-in-from-bottom-1 duration-200 ease-out">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">
                 {selected.size} of {suggestions.length} selected
@@ -192,11 +192,11 @@ export function SuggestSkillsModal({
                     onClick={() => toggleSkill(skill)}
                     aria-pressed={isSelected}
                     className={cn(
-                      'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                      'rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150 ease-out',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       isSelected
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-background text-foreground hover:bg-muted'
+                        ? 'border-primary bg-primary text-primary-foreground scale-[1.03]'
+                        : 'border-border bg-background text-foreground hover:bg-muted hover:scale-[1.03]'
                     )}
                   >
                     {skill}

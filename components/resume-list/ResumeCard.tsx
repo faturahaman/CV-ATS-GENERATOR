@@ -55,7 +55,7 @@ export const ResumeCard = memo(function ResumeCard({
 
   return (
     <>
-      <article className="group flex items-start justify-between gap-6 py-7 hover:bg-muted/30 -mx-4 px-4 rounded-lg transition-colors">
+      <article className="group flex items-start justify-between gap-6 py-7 hover:bg-muted/30 -mx-4 px-4 rounded-lg transition-all duration-200 ease-out">
         {/* Left: icon + text */}
         <div className="flex items-start gap-4 flex-1 min-w-0">
           {/* File icon thumbnail */}
@@ -73,7 +73,7 @@ export const ResumeCard = memo(function ResumeCard({
               aria-label={`Edit ${resume.title}`}
             >
               <h2
-                className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1"
+                className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors duration-200 ease-out line-clamp-1"
                 style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 {resume.title}
@@ -93,7 +93,7 @@ export const ResumeCard = memo(function ResumeCard({
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-full transition-all ${progressColor}`}
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
                     style={{ width: `${progress}%` }}
                     role="progressbar"
                     aria-valuenow={progress}
