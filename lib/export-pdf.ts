@@ -2,8 +2,15 @@
  * PDF Export
  *
  * Generates an ATS-friendly PDF resume using jsPDF and triggers a browser
- * download. The layout is single-column with Helvetica (a standard ATS-safe
- * font), no images, and no decorative symbols.
+ * download. Layout matches CVPreview exactly:
+ * - Name: centered, uppercase, bold, 20pt
+ * - Job Target: centered, 11pt
+ * - Contact: centered, 9.5pt
+ * - Section headers: uppercase, bold, 11pt, with bottom rule
+ * - Experience: job title bold + date right-aligned, company italic below
+ * - Education: degree bold + grad date right-aligned, school italic below
+ * - Skills: grouped 4 per row, bullet list
+ * - Certifications: bullet list
  *
  * Filename format: `CV_[FullName]_[YYYY-MM-DD].pdf`
  */
@@ -13,39 +20,44 @@ import type { Resume } from '@/types/resume'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const PAGE_WIDTH = 210   // A4 mm
-const PAGE_HEIGHT = 297  // A4 mm
-const MARGIN_X = 20      // left/right margin mm
+const PAGE_WIDTH = 210    // A4 mm
+const PAGE_HEIGHT = 297   // A4 mm
+const MARGIN_X = 20       // left/right margin mm
+const MARGIN_Y = 20       // top/bottom margin mm
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2
 
 const FONT = 'helvetica'
 
+// Font sizes in pt — mirrors CVPreview
 const SIZE = {
-  name: 18,
-  jobTarget: 12,
-  contact: 9,
+  name: 20,
+  jobTarget: 11,
+  contact: 9.5,
   sectionHeader: 11,
-  body: 10,
-  small: 9,
+  body: 10.5,
+  bodySmall: 10,
+  small: 9.5,
 } as const
 
-const LINE_HEIGHT = {
-  name: 8,
-  jobTarget: 6,
-  contact: 5,
+// Line heights in mm
+const LH = {
+  name: 9,
+  jobTarget: 6.5,
+  contact: 5.5,
   sectionHeader: 6,
-  body: 5.5,
-  small: 5,
+  body: 6,
+  bodySmall: 5.5,
+  small: 5.5,
 } as const
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDateLabel(value: string): string {
   if (!value) return ''
-  if (value === 'Present') return 'Present'
+  if (value.toLowerCase() === 'present') return 'Present'
   const d = new Date(value)
   if (isNaN(d.getTime())) return value
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
 }
 
 function todayISO(): string {
@@ -56,74 +68,147 @@ function todayISO(): string {
   return `${y}-${m}-${d}`
 }
 
+function splitDescriptionLines(text: string): string[] {
+  if (!text?.trim()) return []
+  return text
+    .split('\n')
+    .map((l) => l.replace(/^[-•*]\s*/, '').trim())
+    .filter(Boolean)
+}
+
 // ── PDF Writer helper ─────────────────────────────────────────────────────────
 
 class PDFWriter {
   private doc: jsPDF
   private y: number
-  private readonly marginX: number
-  private readonly pageHeight: number
-  private readonly contentWidth: number
 
   constructor(doc: jsPDF) {
     this.doc = doc
-    this.y = MARGIN_X
-    this.marginX = MARGIN_X
-    this.pageHeight = PAGE_HEIGHT
-    this.contentWidth = CONTENT_WIDTH
+    this.y = MARGIN_Y
   }
 
   /** Ensure there is at least `needed` mm before the bottom margin. */
   private ensureSpace(needed: number): void {
-    if (this.y + needed > this.pageHeight - MARGIN_X) {
+    if (this.y + needed > PAGE_HEIGHT - MARGIN_Y) {
       this.doc.addPage()
-      this.y = MARGIN_X
+      this.y = MARGIN_Y
     }
   }
 
-  /** Write a single line of text. */
+  /** Write a single line of text at x position. */
+  private textAt(
+    text: string,
+    x: number,
+    size: number,
+    lineH: number,
+    style: 'normal' | 'bold' | 'italic' | 'bolditalic' = 'normal',
+    color: [number, number, number] = [26, 26, 26],
+    align: 'left' | 'center' | 'right' = 'left'
+  ): void {
+    this.ensureSpace(lineH + 1)
+    this.doc.setFont(FONT, style)
+    this.doc.setFontSize(size)
+    this.doc.setTextColor(...color)
+    this.doc.text(text, x, this.y, { align })
+    this.y += lineH
+  }
+
+  /** Centered line. */
+  centered(
+    text: string,
+    size: number,
+    lineH: number,
+    style: 'normal' | 'bold' | 'italic' = 'normal',
+    color: [number, number, number] = [26, 26, 26]
+  ): void {
+    this.textAt(text, PAGE_WIDTH / 2, size, lineH, style, color, 'center')
+  }
+
+  /** Left-aligned line. */
   line(
     text: string,
     size: number,
     lineH: number,
-    style: 'normal' | 'bold' = 'normal',
+    style: 'normal' | 'bold' | 'italic' = 'normal',
     color: [number, number, number] = [26, 26, 26]
   ): void {
-    this.ensureSpace(lineH + 2)
-    this.doc.setFont(FONT, style)
+    this.textAt(text, MARGIN_X, size, lineH, style, color, 'left')
+  }
+
+  /** Right-aligned line at the right margin. */
+  rightLine(
+    text: string,
+    size: number,
+    lineH: number,
+    style: 'normal' | 'bold' | 'italic' = 'normal',
+    color: [number, number, number] = [26, 26, 26]
+  ): void {
+    this.textAt(text, MARGIN_X + CONTENT_WIDTH, size, lineH, style, color, 'right')
+  }
+
+  /**
+   * Two items on the same line: left-aligned bold text + right-aligned normal text.
+   * Returns the y BEFORE advancing so caller can overlay the right text.
+   */
+  twoColumn(
+    leftText: string,
+    rightText: string,
+    size: number,
+    lineH: number,
+    leftStyle: 'normal' | 'bold' = 'bold',
+    rightStyle: 'normal' | 'bold' = 'normal',
+    color: [number, number, number] = [26, 26, 26]
+  ): void {
+    this.ensureSpace(lineH + 1)
+    // Left
+    this.doc.setFont(FONT, leftStyle)
     this.doc.setFontSize(size)
     this.doc.setTextColor(...color)
-    this.doc.text(text, this.marginX, this.y)
+    this.doc.text(leftText, MARGIN_X, this.y)
+    // Right
+    if (rightText) {
+      this.doc.setFont(FONT, rightStyle)
+      this.doc.text(rightText, MARGIN_X + CONTENT_WIDTH, this.y, { align: 'right' })
+    }
     this.y += lineH
   }
 
-  /** Write wrapped text (multi-line). Returns new y. */
+  /** Write wrapped text (multi-line). */
   wrappedText(
     text: string,
     size: number,
     lineH: number,
-    style: 'normal' | 'bold' = 'normal',
+    style: 'normal' | 'bold' | 'italic' = 'normal',
     color: [number, number, number] = [26, 26, 26],
     indent = 0
   ): void {
     this.doc.setFont(FONT, style)
     this.doc.setFontSize(size)
     this.doc.setTextColor(...color)
-    const lines = this.doc.splitTextToSize(text, this.contentWidth - indent)
+    const lines = this.doc.splitTextToSize(text, CONTENT_WIDTH - indent)
     for (const l of lines) {
       this.ensureSpace(lineH + 1)
-      this.doc.text(l, this.marginX + indent, this.y)
+      this.doc.text(l, MARGIN_X + indent, this.y)
       this.y += lineH
     }
   }
 
   /** Draw a horizontal rule. */
-  rule(color: [number, number, number] = [180, 180, 180]): void {
+  rule(thickness = 0.5, color: [number, number, number] = [26, 26, 26]): void {
     this.ensureSpace(3)
     this.doc.setDrawColor(...color)
-    this.doc.setLineWidth(0.3)
-    this.doc.line(this.marginX, this.y, this.marginX + this.contentWidth, this.y)
+    this.doc.setLineWidth(thickness)
+    this.doc.line(MARGIN_X, this.y, MARGIN_X + CONTENT_WIDTH, this.y)
     this.y += 3
+  }
+
+  /** Light separator rule between entries. */
+  lightRule(): void {
+    this.ensureSpace(5)
+    this.doc.setDrawColor(208, 208, 208)
+    this.doc.setLineWidth(0.2)
+    this.doc.line(MARGIN_X, this.y, MARGIN_X + CONTENT_WIDTH, this.y)
+    this.y += 5
   }
 
   /** Add vertical space. */
@@ -131,11 +216,23 @@ class PDFWriter {
     this.y += mm
   }
 
-  /** Draw a section header with an underline rule. */
+  /**
+   * Section header: uppercase bold text + thick bottom rule.
+   * Matches CVPreview SectionHeader exactly.
+   */
   sectionHeader(title: string): void {
-    this.gap(4)
-    this.line(title.toUpperCase(), SIZE.sectionHeader, LINE_HEIGHT.sectionHeader, 'bold', [26, 26, 26])
-    this.rule([180, 180, 180])
+    this.gap(3)
+    this.ensureSpace(LH.sectionHeader + 6)
+    this.doc.setFont(FONT, 'bold')
+    this.doc.setFontSize(SIZE.sectionHeader)
+    this.doc.setTextColor(26, 26, 26)
+    this.doc.text(title.toUpperCase(), MARGIN_X, this.y)
+    this.y += LH.sectionHeader + 1
+    // Bottom border — 2px equivalent
+    this.doc.setDrawColor(26, 26, 26)
+    this.doc.setLineWidth(0.5)
+    this.doc.line(MARGIN_X, this.y, MARGIN_X + CONTENT_WIDTH, this.y)
+    this.y += 4  // gap after rule before first entry
   }
 
   getDoc(): jsPDF {
@@ -147,6 +244,7 @@ class PDFWriter {
 
 /**
  * Exports the resume as an ATS-friendly PDF and triggers a browser download.
+ * Layout is pixel-perfect match to CVPreview component.
  *
  * @param resume - The resume data to export
  */
@@ -156,63 +254,80 @@ export function exportToPDF(resume: Resume): void {
 
   const { personalDetails: pd } = resume
 
-  // ── Personal Details header ───────────────────────────────────────────────
+  // ── Header: Full Name (centered, uppercase, bold, 20pt) ──────────────────
   const fullName = [pd.fullName, pd.lastName].filter(Boolean).join(' ')
   if (fullName) {
-    w.line(fullName, SIZE.name, LINE_HEIGHT.name, 'bold')
+    w.centered(fullName.toUpperCase(), SIZE.name, LH.name, 'bold')
+    w.gap(1)
   }
 
-  if (pd.jobTarget) {
-    w.line(pd.jobTarget, SIZE.jobTarget, LINE_HEIGHT.jobTarget, 'normal', [80, 80, 80])
+  // ── Job Target (centered, normal, 11pt) ──────────────────────────────────
+  if (pd.jobTarget?.trim()) {
+    w.centered(pd.jobTarget.trim(), SIZE.jobTarget, LH.jobTarget, 'normal')
+    w.gap(1)
   }
 
-  const contactParts = [pd.email, pd.phoneNumber, pd.country].filter(Boolean)
-  if (contactParts.length) {
-    w.line(contactParts.join('  |  '), SIZE.contact, LINE_HEIGHT.contact, 'normal', [100, 100, 100])
-  }
-
+  // ── Contact + Links (centered, 9.5pt) ────────────────────────────────────
+  const contactParts = [pd.email, pd.phoneNumber, pd.cityState, pd.country].filter(Boolean)
   const linkParts = [
-    pd.linkedinUrl && `LinkedIn: ${pd.linkedinUrl}`,
-    pd.githubUrl && `GitHub: ${pd.githubUrl}`,
-    pd.portfolioUrl && `Portfolio: ${pd.portfolioUrl}`,
-    pd.website && `Website: ${pd.website}`,
+    pd.linkedinUrl,
+    pd.githubUrl && `github.com/${pd.githubUrl.replace(/.*github\.com\//i, '')}`,
+    pd.portfolioUrl,
   ].filter(Boolean) as string[]
-  if (linkParts.length) {
-    w.wrappedText(linkParts.join('  |  '), SIZE.small, LINE_HEIGHT.small, 'normal', [100, 100, 100])
+  const contactLine = [...contactParts, ...linkParts].join(' | ')
+  if (contactLine) {
+    w.wrappedText(contactLine, SIZE.contact, LH.contact, 'normal', [26, 26, 26])
+    w.gap(1)
   }
 
-  w.rule()
+  // ── Divider after header ──────────────────────────────────────────────────
+  if (fullName || contactLine) {
+    w.gap(2)
+    w.rule(0.5)
+    w.gap(1)
+  }
 
   // ── Professional Summary ──────────────────────────────────────────────────
   if (resume.professionalSummary?.trim()) {
     w.sectionHeader('Professional Summary')
-    w.wrappedText(resume.professionalSummary.trim(), SIZE.body, LINE_HEIGHT.body)
+    w.wrappedText(resume.professionalSummary.trim(), SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26])
   }
 
   // ── Work Experience ───────────────────────────────────────────────────────
   if (resume.experience?.length) {
     w.sectionHeader('Work Experience')
-    for (const exp of resume.experience) {
+    for (let i = 0; i < resume.experience.length; i++) {
+      const exp = resume.experience[i]
       const start = formatDateLabel(exp.startDate)
       const end = formatDateLabel(exp.endDate)
-      const dateRange = [start, end].filter(Boolean).join(' - ')
+      const dateRange = [start, end].filter(Boolean).join(' \u2013 ')
+      const lines = splitDescriptionLines(exp.description)
 
-      // Job title (bold) + date range (right-aligned on same line)
-      const titleText = [exp.jobTitle, exp.companyName].filter(Boolean).join(' — ')
-      w.gap(2)
-      w.line(titleText, SIZE.body, LINE_HEIGHT.body, 'bold')
-      if (dateRange) {
-        w.line(dateRange, SIZE.small, LINE_HEIGHT.small, 'normal', [100, 100, 100])
+      if (i > 0) {
+        w.lightRule()
       }
 
-      if (exp.description?.trim()) {
-        const descLines = exp.description
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(Boolean)
-        for (const dl of descLines) {
-          const bullet = dl.startsWith('-') ? dl : `- ${dl}`
-          w.wrappedText(bullet, SIZE.body, LINE_HEIGHT.body, 'normal', [26, 26, 26], 3)
+      // Job title (bold, left) + date range (normal, right) — same line
+      w.twoColumn(
+        exp.jobTitle || '',
+        dateRange,
+        SIZE.body,
+        LH.body,
+        'bold',
+        'normal',
+        [26, 26, 26]
+      )
+
+      // Company name — italic, below
+      if (exp.companyName) {
+        w.line(exp.companyName, SIZE.bodySmall, LH.bodySmall, 'italic', [26, 26, 26])
+      }
+
+      // Bullet points
+      if (lines.length > 0) {
+        w.gap(1)
+        for (const dl of lines) {
+          w.wrappedText(`\u2022 ${dl}`, SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26], 4)
         }
       }
     }
@@ -223,50 +338,59 @@ export function exportToPDF(resume: Resume): void {
     w.sectionHeader('Education')
     for (const edu of resume.education) {
       const grad = formatDateLabel(edu.graduationDate)
-      const degreeField = [edu.degree, edu.fieldOfStudy].filter(Boolean).join(' in ')
-      const heading = [degreeField, edu.schoolName ? `— ${edu.schoolName}` : '']
-        .filter(Boolean)
-        .join(' ')
+      const degreeField = [edu.degree, edu.fieldOfStudy].filter(Boolean).join(', ')
+      const lines = splitDescriptionLines(edu.description ?? '')
 
-      w.gap(2)
-      w.line(heading, SIZE.body, LINE_HEIGHT.body, 'bold')
-      if (grad) {
-        w.line(grad, SIZE.small, LINE_HEIGHT.small, 'normal', [100, 100, 100])
+      // Degree (bold, left) + graduation date (normal, right) — same line
+      w.twoColumn(
+        degreeField || '',
+        grad ? `Graduated: ${grad}` : '',
+        SIZE.body,
+        LH.body,
+        'bold',
+        'normal',
+        [26, 26, 26]
+      )
+
+      // School name — italic, below
+      if (edu.schoolName) {
+        w.line(edu.schoolName, SIZE.bodySmall, LH.bodySmall, 'italic', [26, 26, 26])
       }
 
-      if (edu.description?.trim()) {
-        const descLines = edu.description
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(Boolean)
-        for (const dl of descLines) {
-          const bullet = dl.startsWith('-') ? dl : `- ${dl}`
-          w.wrappedText(bullet, SIZE.body, LINE_HEIGHT.body, 'normal', [26, 26, 26], 3)
+      // Description bullets
+      if (lines.length > 0) {
+        w.gap(1)
+        for (const dl of lines) {
+          w.wrappedText(`\u2022 ${dl}`, SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26], 4)
         }
       }
+      w.gap(2)
     }
   }
 
   // ── Skills ────────────────────────────────────────────────────────────────
   if (resume.skills?.length) {
     w.sectionHeader('Skills')
-    const skillText = resume.skills
-      .map((s) => (s.level ? `${s.name} (${s.level})` : s.name))
-      .join(', ')
-    w.wrappedText(skillText, SIZE.body, LINE_HEIGHT.body)
+    // Group 4 per row, bullet list — matches CVPreview SkillsSection
+    const CHUNK = 4
+    for (let i = 0; i < resume.skills.length; i += CHUNK) {
+      const row = resume.skills.slice(i, i + CHUNK)
+      const rowText = row.map((s) => s.name).join(', ')
+      w.wrappedText(`\u2022 ${rowText}`, SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26], 4)
+    }
   }
 
   // ── Certifications ────────────────────────────────────────────────────────
   if (resume.certifications?.length) {
     w.sectionHeader('Certifications')
     for (const cert of resume.certifications) {
-      const issue = formatDateLabel(cert.issueDate)
-      const expiry = cert.expirationDate ? formatDateLabel(cert.expirationDate) : ''
-      const dateRange = expiry ? `${issue} - ${expiry}` : issue
-      const parts = [cert.certificationName, cert.issuingOrganization, dateRange ? `(${dateRange})` : '']
+      const certLine = [
+        cert.certificationName,
+        cert.issuingOrganization ? `\u2014 ${cert.issuingOrganization}` : '',
+      ]
         .filter(Boolean)
-      w.gap(1)
-      w.wrappedText(`- ${parts.join(', ')}`, SIZE.body, LINE_HEIGHT.body)
+        .join(' ')
+      w.wrappedText(`\u2022 ${certLine}`, SIZE.bodySmall, LH.bodySmall, 'normal', [26, 26, 26], 4)
     }
   }
 

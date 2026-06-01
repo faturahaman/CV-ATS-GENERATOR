@@ -2,14 +2,15 @@
  * DOCX Export
  *
  * Generates an ATS-friendly DOCX resume using the `docx` library and
- * triggers a browser download.
- *
- * ATS rules enforced:
- * - Single-column layout
- * - Calibri font throughout
- * - No images, no tables, no icons, no decorative symbols
- * - Standard section headings with a bottom border rule
- * - A4 page size with standard margins
+ * triggers a browser download. Layout matches CVPreview exactly:
+ * - Name: centered, uppercase, bold, 20pt
+ * - Job Target: centered, 11pt
+ * - Contact: centered, 9.5pt
+ * - Section headers: uppercase, bold, 11pt, bottom border
+ * - Experience: job title bold + date right-aligned, company italic below
+ * - Education: degree bold + grad date right-aligned, school italic below
+ * - Skills: grouped 4 per row, bullet list
+ * - Certifications: bullet list
  *
  * Filename format: `CV_[FullName]_[YYYY-MM-DD].docx`
  */
@@ -19,10 +20,10 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   AlignmentType,
   BorderStyle,
   PageOrientation,
+  TabStopType,
   convertInchesToTwip,
 } from 'docx'
 import type { Resume } from '@/types/resume'
@@ -32,25 +33,29 @@ import type { Resume } from '@/types/resume'
 const FONT = 'Calibri'
 
 // Font sizes in half-points (docx unit: 1pt = 2 half-points)
-const PT = (n: number) => n * 2
+const PT = (n: number) => Math.round(n * 2)
 
 const SIZES = {
   name: PT(20),
-  jobTarget: PT(12),
-  contact: PT(10),
-  sectionHeader: PT(12),
-  body: PT(11),
-  small: PT(10),
+  jobTarget: PT(11),
+  contact: PT(9.5),
+  sectionHeader: PT(11),
+  body: PT(10.5),
+  bodySmall: PT(10),
+  small: PT(9.5),
 }
+
+// Content width in twips for right-aligned tab stop (A4 - 2 * 0.79in margins)
+const CONTENT_WIDTH_TWIP = convertInchesToTwip(8.27 - 0.79 * 2)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDateLabel(value: string): string {
   if (!value) return ''
-  if (value === 'Present') return 'Present'
+  if (value.toLowerCase() === 'present') return 'Present'
   const d = new Date(value)
   if (isNaN(d.getTime())) return value
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
 }
 
 function todayISO(): string {
@@ -61,17 +66,30 @@ function todayISO(): string {
   return `${y}-${m}-${d}`
 }
 
+function splitDescriptionLines(text: string): string[] {
+  if (!text?.trim()) return []
+  return text
+    .split('\n')
+    .map((l) => l.replace(/^[-•*]\s*/, '').trim())
+    .filter(Boolean)
+}
+
+// ── Paragraph builders ────────────────────────────────────────────────────────
+
 /** Empty paragraph for vertical spacing */
-function spacer(): Paragraph {
+function spacer(size = PT(4)): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: '', size: PT(6), font: FONT })],
+    children: [new TextRun({ text: '', size, font: FONT })],
+    spacing: { before: 0, after: 0 },
   })
 }
 
-/** Section heading with a bottom border rule */
+/**
+ * Section header: uppercase, bold, 11pt, bottom border.
+ * Matches CVPreview SectionHeader exactly.
+ */
 function sectionHeading(title: string): Paragraph {
   return new Paragraph({
-    heading: HeadingLevel.HEADING_2,
     children: [
       new TextRun({
         text: title.toUpperCase(),
@@ -81,57 +99,111 @@ function sectionHeading(title: string): Paragraph {
         color: '1A1A1A',
       }),
     ],
+    alignment: AlignmentType.LEFT,
     border: {
       bottom: {
         color: '1A1A1A',
         space: 1,
         style: BorderStyle.SINGLE,
-        size: 6,
+        size: 12, // ~1.5pt thick, matches 2px border in preview
       },
     },
-    spacing: { before: 160, after: 80 },
+    spacing: { before: 200, after: 80 },
   })
 }
 
-/** Bold + regular inline pair on one paragraph (e.g. "Job Title — Company") */
-function entryHeading(bold: string, normal?: string): Paragraph {
+/**
+ * Two-column row: bold left text + normal right text (right-aligned via tab stop).
+ * Matches the flex justifyContent: space-between layout in CVPreview.
+ */
+function twoColumnRow(
+  leftText: string,
+  rightText: string,
+  leftSize: number,
+  rightSize: number,
+  leftBold = true
+): Paragraph {
   const runs: TextRun[] = [
-    new TextRun({ text: bold, bold: true, size: SIZES.body, font: FONT }),
+    new TextRun({
+      text: leftText,
+      bold: leftBold,
+      size: leftSize,
+      font: FONT,
+      color: '1A1A1A',
+    }),
   ]
-  if (normal) {
-    runs.push(new TextRun({ text: `  ${normal}`, size: SIZES.body, font: FONT }))
+  if (rightText) {
+    runs.push(
+      new TextRun({ text: '\t', size: rightSize, font: FONT }),
+      new TextRun({
+        text: rightText,
+        size: rightSize,
+        font: FONT,
+        color: '1A1A1A',
+      })
+    )
   }
-  return new Paragraph({ children: runs, spacing: { before: 80, after: 0 } })
+  return new Paragraph({
+    children: runs,
+    tabStops: [
+      {
+        type: TabStopType.RIGHT,
+        position: CONTENT_WIDTH_TWIP,
+      },
+    ],
+    spacing: { before: 80, after: 0 },
+  })
 }
 
-/** Muted sub-line (dates, school name, etc.) */
-function subLine(text: string): Paragraph {
+/** Italic sub-line (company name, school name). */
+function italicLine(text: string): Paragraph {
   return new Paragraph({
     children: [
-      new TextRun({ text, size: SIZES.small, font: FONT, color: '555555' }),
+      new TextRun({
+        text,
+        italics: true,
+        size: SIZES.bodySmall,
+        font: FONT,
+        color: '1A1A1A',
+      }),
     ],
     spacing: { before: 0, after: 40 },
   })
 }
 
-/** Body paragraph (wraps naturally) */
+/** Body paragraph (wraps naturally). */
 function bodyParagraph(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, size: SIZES.body, font: FONT })],
+    children: [new TextRun({ text, size: SIZES.bodySmall, font: FONT, color: '1A1A1A' })],
     spacing: { before: 0, after: 40 },
   })
 }
 
-/** Bullet point — plain hyphen prefix for ATS compatibility */
+/** Bullet point — disc bullet character for visual match with CVPreview. */
 function bulletParagraph(text: string): Paragraph {
-  // Strip leading bullet/dash characters that may already be in the text
   const clean = text.replace(/^[-•*]\s*/, '').trim()
   return new Paragraph({
     children: [
-      new TextRun({ text: `- ${clean}`, size: SIZES.body, font: FONT }),
+      new TextRun({ text: `\u2022 ${clean}`, size: SIZES.bodySmall, font: FONT, color: '1A1A1A' }),
     ],
     indent: { left: convertInchesToTwip(0.2) },
     spacing: { before: 0, after: 20 },
+  })
+}
+
+/** Light separator between experience entries. */
+function lightSeparator(): Paragraph {
+  return new Paragraph({
+    children: [new TextRun({ text: '', size: PT(4), font: FONT })],
+    border: {
+      bottom: {
+        color: 'D0D0D0',
+        space: 1,
+        style: BorderStyle.SINGLE,
+        size: 2,
+      },
+    },
+    spacing: { before: 60, after: 60 },
   })
 }
 
@@ -139,7 +211,7 @@ function bulletParagraph(text: string): Paragraph {
 
 /**
  * Exports the resume as an ATS-friendly DOCX file and triggers a browser
- * download.
+ * download. Layout is pixel-perfect match to CVPreview component.
  *
  * @param resume - The resume data to export
  */
@@ -147,27 +219,27 @@ export async function exportToDocx(resume: Resume): Promise<void> {
   const { personalDetails: pd } = resume
   const paragraphs: Paragraph[] = []
 
-  // ── Header: Full Name ────────────────────────────────────────────────────
+  // ── Header: Full Name (centered, uppercase, bold, 20pt) ──────────────────
   const fullName = [pd.fullName, pd.lastName].filter(Boolean).join(' ')
   if (fullName) {
     paragraphs.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: fullName,
+            text: fullName.toUpperCase(),
             bold: true,
             size: SIZES.name,
             font: FONT,
             color: '1A1A1A',
           }),
         ],
-        alignment: AlignmentType.LEFT,
-        spacing: { before: 0, after: 60 },
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: 40 },
       })
     )
   }
 
-  // ── Job Target ───────────────────────────────────────────────────────────
+  // ── Job Target (centered, normal, 11pt) ──────────────────────────────────
   if (pd.jobTarget?.trim()) {
     paragraphs.push(
       new Paragraph({
@@ -176,51 +248,54 @@ export async function exportToDocx(resume: Resume): Promise<void> {
             text: pd.jobTarget.trim(),
             size: SIZES.jobTarget,
             font: FONT,
-            color: '444444',
+            color: '1A1A1A',
           }),
         ],
+        alignment: AlignmentType.CENTER,
         spacing: { before: 0, after: 40 },
       })
     )
   }
 
-  // ── Contact Info ─────────────────────────────────────────────────────────
+  // ── Contact + Links (centered, 9.5pt) ────────────────────────────────────
   const contactParts = [pd.email, pd.phoneNumber, pd.cityState, pd.country].filter(Boolean)
-  if (contactParts.length) {
+  const linkParts = [
+    pd.linkedinUrl,
+    pd.githubUrl && `github.com/${pd.githubUrl.replace(/.*github\.com\//i, '')}`,
+    pd.portfolioUrl,
+  ].filter(Boolean) as string[]
+  const contactLine = [...contactParts, ...linkParts].join(' | ')
+  if (contactLine) {
     paragraphs.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: contactParts.join('  |  '),
+            text: contactLine,
             size: SIZES.contact,
             font: FONT,
-            color: '555555',
+            color: '1A1A1A',
           }),
         ],
-        spacing: { before: 0, after: 20 },
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 0, after: 40 },
       })
     )
   }
 
-  // ── Links ────────────────────────────────────────────────────────────────
-  const linkParts = [
-    pd.linkedinUrl && `LinkedIn: ${pd.linkedinUrl}`,
-    pd.githubUrl && `GitHub: ${pd.githubUrl}`,
-    pd.portfolioUrl && `Portfolio: ${pd.portfolioUrl}`,
-    pd.website && `Website: ${pd.website}`,
-  ].filter(Boolean) as string[]
-  if (linkParts.length) {
+  // ── Divider after header (thick top border on next paragraph) ────────────
+  if (fullName || contactLine) {
     paragraphs.push(
       new Paragraph({
-        children: [
-          new TextRun({
-            text: linkParts.join('  |  '),
-            size: SIZES.contact,
-            font: FONT,
-            color: '555555',
-          }),
-        ],
-        spacing: { before: 0, after: 80 },
+        children: [new TextRun({ text: '', size: PT(2), font: FONT })],
+        border: {
+          bottom: {
+            color: '1A1A1A',
+            space: 1,
+            style: BorderStyle.SINGLE,
+            size: 12,
+          },
+        },
+        spacing: { before: 40, after: 0 },
       })
     )
   }
@@ -234,21 +309,31 @@ export async function exportToDocx(resume: Resume): Promise<void> {
   // ── Work Experience ──────────────────────────────────────────────────────
   if (resume.experience?.length) {
     paragraphs.push(sectionHeading('Work Experience'))
-    for (const exp of resume.experience) {
+    for (let i = 0; i < resume.experience.length; i++) {
+      const exp = resume.experience[i]
       const start = formatDateLabel(exp.startDate)
       const end = formatDateLabel(exp.endDate)
-      const dateRange = [start, end].filter(Boolean).join(' - ')
+      const dateRange = [start, end].filter(Boolean).join(' \u2013 ')
+      const lines = splitDescriptionLines(exp.description)
 
-      paragraphs.push(entryHeading(exp.jobTitle, exp.companyName))
-      if (dateRange) paragraphs.push(subLine(dateRange))
-
-      if (exp.description?.trim()) {
-        const lines = exp.description.split('\n').map((l) => l.trim()).filter(Boolean)
-        for (const line of lines) {
-          paragraphs.push(bulletParagraph(line))
-        }
+      if (i > 0) {
+        paragraphs.push(lightSeparator())
       }
-      paragraphs.push(spacer())
+
+      // Job title (bold, left) + date range (right) — same line via tab stop
+      paragraphs.push(
+        twoColumnRow(exp.jobTitle || '', dateRange, SIZES.body, SIZES.small)
+      )
+
+      // Company name — italic, below
+      if (exp.companyName) {
+        paragraphs.push(italicLine(exp.companyName))
+      }
+
+      // Bullet points
+      for (const line of lines) {
+        paragraphs.push(bulletParagraph(line))
+      }
     }
   }
 
@@ -257,16 +342,27 @@ export async function exportToDocx(resume: Resume): Promise<void> {
     paragraphs.push(sectionHeading('Education'))
     for (const edu of resume.education) {
       const grad = formatDateLabel(edu.graduationDate)
-      const degreeField = [edu.degree, edu.fieldOfStudy].filter(Boolean).join(' in ')
+      const degreeField = [edu.degree, edu.fieldOfStudy].filter(Boolean).join(', ')
+      const lines = splitDescriptionLines(edu.description ?? '')
 
-      paragraphs.push(entryHeading(degreeField, edu.schoolName))
-      if (grad) paragraphs.push(subLine(grad))
+      // Degree (bold, left) + graduation date (right) — same line via tab stop
+      paragraphs.push(
+        twoColumnRow(
+          degreeField || '',
+          grad ? `Graduated: ${grad}` : '',
+          SIZES.body,
+          SIZES.small
+        )
+      )
 
-      if (edu.description?.trim()) {
-        const lines = edu.description.split('\n').map((l) => l.trim()).filter(Boolean)
-        for (const line of lines) {
-          paragraphs.push(bulletParagraph(line))
-        }
+      // School name — italic, below
+      if (edu.schoolName) {
+        paragraphs.push(italicLine(edu.schoolName))
+      }
+
+      // Description bullets
+      for (const line of lines) {
+        paragraphs.push(bulletParagraph(line))
       }
       paragraphs.push(spacer())
     }
@@ -275,25 +371,26 @@ export async function exportToDocx(resume: Resume): Promise<void> {
   // ── Skills ───────────────────────────────────────────────────────────────
   if (resume.skills?.length) {
     paragraphs.push(sectionHeading('Skills'))
-    const skillText = resume.skills
-      .map((s) => (s.level ? `${s.name} (${s.level})` : s.name))
-      .join(', ')
-    paragraphs.push(bodyParagraph(skillText))
+    // Group 4 per row, bullet list — matches CVPreview SkillsSection
+    const CHUNK = 4
+    for (let i = 0; i < resume.skills.length; i += CHUNK) {
+      const row = resume.skills.slice(i, i + CHUNK)
+      const rowText = row.map((s) => s.name).join(', ')
+      paragraphs.push(bulletParagraph(rowText))
+    }
   }
 
   // ── Certifications ───────────────────────────────────────────────────────
   if (resume.certifications?.length) {
     paragraphs.push(sectionHeading('Certifications'))
     for (const cert of resume.certifications) {
-      const issue = formatDateLabel(cert.issueDate)
-      const expiry = cert.expirationDate ? formatDateLabel(cert.expirationDate) : ''
-      const dateRange = expiry ? `${issue} - ${expiry}` : issue
-      const parts = [
+      const certLine = [
         cert.certificationName,
-        cert.issuingOrganization,
-        dateRange ? `(${dateRange})` : '',
-      ].filter(Boolean)
-      paragraphs.push(bulletParagraph(parts.join(', ')))
+        cert.issuingOrganization ? `\u2014 ${cert.issuingOrganization}` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+      paragraphs.push(bulletParagraph(certLine))
     }
   }
 
@@ -302,7 +399,7 @@ export async function exportToDocx(resume: Resume): Promise<void> {
     styles: {
       default: {
         document: {
-          run: { font: FONT, size: SIZES.body, color: '1A1A1A' },
+          run: { font: FONT, size: SIZES.bodySmall, color: '1A1A1A' },
         },
       },
     },
