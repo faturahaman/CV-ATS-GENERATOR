@@ -221,6 +221,7 @@ export const FormPanel = memo(function FormPanel({
                 <ProfessionalSummaryForm
                   value={resume.professionalSummary ?? ''}
                   onChange={handleSummaryChange}
+                  language={language}
                 />
               </div>
             )}
