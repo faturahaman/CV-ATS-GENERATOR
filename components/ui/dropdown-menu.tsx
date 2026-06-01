@@ -1,4 +1,4 @@
-git remote add origin https://github.com/faturahaman/CV-ATS-GENERATOR.git"use client"
+"use client"
 
 import * as React from "react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"

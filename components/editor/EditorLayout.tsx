@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useResumeStore } from '@/store/resume-store'
 import { FormPanel } from '@/components/editor/FormPanel'
 import { PreviewPanel } from '@/components/preview/PreviewPanel'
+import { useOnline } from '@/hooks/use-online'
 import type { Language } from '@/i18n/translations'
 import type { Resume } from '@/types/resume'
 
@@ -14,6 +15,7 @@ interface EditorLayoutProps {
 export function EditorLayout({ resumeId }: EditorLayoutProps) {
   const updateResume = useResumeStore((s) => s.updateResume)
   const language = useResumeStore((s) => s.language) as Language
+  const isOnline = useOnline()
   const storeResume = useResumeStore((s) =>
     s.resumes.find((r) => r.id === resumeId)
   )
@@ -92,7 +94,7 @@ export function EditorLayout({ resumeId }: EditorLayoutProps) {
 
       {/* Preview panel — 60% on desktop, full width on mobile */}
       <div className="w-full lg:w-[60%] lg:min-w-0">
-        <PreviewPanel resume={previewResume} />
+        <PreviewPanel resume={previewResume} language={language} isOnline={isOnline} />
       </div>
     </div>
   )

@@ -1,24 +1,29 @@
 'use client'
 
 import { memo, useCallback, useRef, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { generateUUID } from '@/lib/utils'
+import { SuggestSkillsModal } from '@/components/modals/SuggestSkillsModal'
 import type { SkillEntry } from '@/types/resume'
 
 interface SkillsFormProps {
   skills: SkillEntry[]
   onChange: (skills: SkillEntry[]) => void
+  /** Language forwarded to the AI modal */
+  language?: 'EN' | 'ID'
 }
 
 export const SkillsForm = memo(function SkillsForm({
   skills,
   onChange,
+  language = 'EN',
 }: SkillsFormProps) {
   const [inputValue, setInputValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [suggestModalOpen, setSuggestModalOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const addSkill = useCallback(() => {
@@ -57,6 +62,20 @@ export const SkillsForm = memo(function SkillsForm({
       addSkill()
     }
   }
+
+  // Accept selected suggestions — skip duplicates, keep existing skills
+  const handleAcceptSuggestions = useCallback(
+    (selectedSkills: string[]) => {
+      const existingNames = new Set(skills.map((s) => s.name.toLowerCase()))
+      const newSkills: SkillEntry[] = selectedSkills
+        .filter((name) => !existingNames.has(name.toLowerCase()))
+        .map((name) => ({ id: generateUUID(), name }))
+      if (newSkills.length > 0) {
+        onChange([...skills, ...newSkills])
+      }
+    },
+    [skills, onChange]
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -120,10 +139,30 @@ export const SkillsForm = memo(function SkillsForm({
             {error}
           </p>
         )}
-        <p className="text-xs text-muted-foreground">
-          Press Enter or click Add to add a skill
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            Press Enter or click Add to add a skill
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => setSuggestModalOpen(true)}
+          >
+            <Lightbulb className="h-3.5 w-3.5" />
+            Suggest with AI
+          </Button>
+        </div>
       </div>
+
+      {/* AI Suggest Skills Modal */}
+      <SuggestSkillsModal
+        open={suggestModalOpen}
+        onOpenChange={setSuggestModalOpen}
+        onAccept={handleAcceptSuggestions}
+        language={language}
+      />
     </div>
   )
 })

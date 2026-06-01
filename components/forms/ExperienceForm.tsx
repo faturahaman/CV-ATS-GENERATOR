@@ -4,11 +4,13 @@ import { memo, useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X, Sparkles, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { generateUUID } from '@/lib/utils'
+import { GenerateExperienceModal } from '@/components/modals/GenerateExperienceModal'
+import { ImproveExperienceModal } from '@/components/modals/ImproveExperienceModal'
 import type { ExperienceEntry } from '@/types/resume'
 
 // ── Validation schema (no AI, no id required in form) ────────────────────────
@@ -107,9 +109,10 @@ interface EntryFormProps {
   initial?: ExperienceEntry
   onSave: (entry: ExperienceEntry) => void
   onCancel: () => void
+  language?: 'EN' | 'ID'
 }
 
-function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
+function EntryForm({ initial, onSave, onCancel, language = 'EN' }: EntryFormProps) {
   const {
     register,
     watch,
@@ -129,7 +132,9 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
     mode: 'onChange',
   })
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  const [generateModalOpen, setGenerateModalOpen] = useState(false)
+  const [improveModalOpen, setImproveModalOpen] = useState(false)
+
   const isCurrentPosition = watch('isCurrentPosition')
 
   const onSubmit = (values: ExperienceFormValues) => {
@@ -142,6 +147,28 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
       description: values.description,
     })
   }
+
+  // Append generated bullet points to the existing description
+  const handleAcceptGenerated = useCallback(
+    (bullets: string) => {
+      // eslint-disable-next-line react-hooks/incompatible-library
+      const current = watch('description') ?? ''
+      const separator = current.trim() ? '\n' : ''
+      const next = (current + separator + bullets).slice(0, 1000)
+      setValue('description', next, { shouldValidate: true, shouldDirty: true })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setValue]
+  )
+
+  // Replace description with the improved version
+  const handleAcceptImproved = useCallback(
+    (improved: string) => {
+      const capped = improved.slice(0, 1000)
+      setValue('description', capped, { shouldValidate: true, shouldDirty: true })
+    },
+    [setValue]
+  )
 
   const inputCls = (hasError: boolean) =>
     cn('h-9', hasError && 'border-destructive focus-visible:ring-destructive/20')
@@ -242,24 +269,51 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
         id="exp-description"
         error={errors.description?.message}
       >
-        <div className="relative">
-          <textarea
-            id="exp-description"
-            rows={4}
-            placeholder="• Achieved X by doing Y, resulting in Z&#10;• Led a team of N engineers..."
-            className={cn(
-              'w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm',
-              'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2',
-              'focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-              errors.description && 'border-destructive focus-visible:ring-destructive/20'
+        <div className="flex flex-col gap-1.5">
+          {/* AI toolbar: Generate + Improve with AI */}
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => setGenerateModalOpen(true)}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Generate with AI
+            </Button>
+            {watch('description')?.trim() && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setImproveModalOpen(true)}
+              >
+                <Wand2 className="h-3.5 w-3.5" />
+                Improve with AI
+              </Button>
             )}
-            aria-invalid={!!errors.description}
-            aria-describedby={errors.description ? 'exp-description-error' : undefined}
-            {...register('description')}
-          />
-          <span className="absolute bottom-2 right-2 text-xs text-muted-foreground tabular-nums">
-            {watch('description')?.length ?? 0}/1000
-          </span>
+          </div>
+          <div className="relative">
+            <textarea
+              id="exp-description"
+              rows={4}
+              placeholder="• Achieved X by doing Y, resulting in Z&#10;• Led a team of N engineers..."
+              className={cn(
+                'w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm',
+                'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2',
+                'focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+                errors.description && 'border-destructive focus-visible:ring-destructive/20'
+              )}
+              aria-invalid={!!errors.description}
+              aria-describedby={errors.description ? 'exp-description-error' : undefined}
+              {...register('description')}
+            />
+            <span className="absolute bottom-2 right-2 text-xs text-muted-foreground tabular-nums">
+              {watch('description')?.length ?? 0}/1000
+            </span>
+          </div>
         </div>
       </Field>
 
@@ -273,6 +327,25 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
           {initial ? 'Save Changes' : 'Add Experience'}
         </Button>
       </div>
+
+      {/* AI Generate Experience Modal */}
+      <GenerateExperienceModal
+        open={generateModalOpen}
+        onOpenChange={setGenerateModalOpen}
+        onAccept={handleAcceptGenerated}
+        defaultJobTitle={watch('jobTitle')}
+        defaultCompanyName={watch('companyName')}
+        language={language}
+      />
+
+      {/* AI Improve Experience Modal */}
+      <ImproveExperienceModal
+        open={improveModalOpen}
+        onOpenChange={setImproveModalOpen}
+        originalDescription={watch('description') ?? ''}
+        onAccept={handleAcceptImproved}
+        language={language}
+      />
     </form>
   )
 }

@@ -1,10 +1,11 @@
 'use client'
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { GenerateSummaryModal } from '@/components/modals/GenerateSummaryModal'
+import { ImproveSummaryModal } from '@/components/modals/ImproveSummaryModal'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ export const ProfessionalSummaryForm = memo(function ProfessionalSummaryForm({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [improveModalOpen, setImproveModalOpen] = useState(false)
 
   // Keep local state in sync when the parent value changes externally
   // (e.g. loading a different resume)
@@ -89,8 +91,8 @@ export const ProfessionalSummaryForm = memo(function ProfessionalSummaryForm({
   return (
     <>
       <div className="flex flex-col gap-2">
-        {/* Toolbar row: Generate with AI button */}
-        <div className="flex items-center justify-end">
+        {/* Toolbar row: Generate with AI + Improve with AI buttons */}
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
@@ -101,6 +103,18 @@ export const ProfessionalSummaryForm = memo(function ProfessionalSummaryForm({
             <Sparkles className="h-3.5 w-3.5" />
             Generate with AI
           </Button>
+          {!isEmpty && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setImproveModalOpen(true)}
+              className="gap-1.5 text-xs"
+            >
+              <Wand2 className="h-3.5 w-3.5" />
+              Improve with AI
+            </Button>
+          )}
         </div>
 
         <div className="relative">
@@ -152,6 +166,15 @@ export const ProfessionalSummaryForm = memo(function ProfessionalSummaryForm({
       <GenerateSummaryModal
         open={modalOpen}
         onOpenChange={setModalOpen}
+        onAccept={handleAccept}
+        language={language}
+      />
+
+      {/* AI Improve Summary Modal */}
+      <ImproveSummaryModal
+        open={improveModalOpen}
+        onOpenChange={setImproveModalOpen}
+        originalSummary={localValue}
         onAccept={handleAccept}
         language={language}
       />

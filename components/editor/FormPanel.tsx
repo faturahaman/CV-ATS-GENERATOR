@@ -276,6 +276,7 @@ export const FormPanel = memo(function FormPanel({
                 <SkillsForm
                   skills={resume.skills}
                   onChange={handleSkillsChange}
+                  language={language}
                 />
               </div>
             )}
