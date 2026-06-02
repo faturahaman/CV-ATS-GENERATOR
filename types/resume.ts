@@ -89,13 +89,35 @@ export interface CertificationEntry {
 }
 
 /**
+ * ATSScoreData interface
+ *
+ * Full ATS score result persisted alongside the resume so the breakdown,
+ * issues, and quick-wins survive page refreshes and navigation.
+ */
+export interface ATSScoreData {
+  score: number;
+  breakdown: {
+    contactInfo: number;
+    summary: number;
+    experience: number;
+    education: number;
+    skills: number;
+    certifications: number;
+    formatting: number;
+  };
+  topIssues: string[];
+  quickWins: string[];
+}
+
+/**
  * ResumeMetadata interface
  * 
  * Represents metadata about the resume including completion progress and ATS score.
  */
 export interface ResumeMetadata {
   completionProgress: number; // 0-100
-  atsScore: number; // 0-100
+  atsScore: number; // 0-100  (kept for quick badge display)
+  atsScoreData?: ATSScoreData | null; // full breakdown — persisted so it survives refresh
   language: 'EN' | 'ID';
 }
 

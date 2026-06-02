@@ -83,7 +83,14 @@ export const ATSScoreDisplay = memo(function ATSScoreDisplay({ resume, language,
   const t = translations[language]
   const { calculateATSScore, isLoading, error, clearError } = useAI()
   const updateResume = useResumeStore((s) => s.updateResume)
-  const [scoreData, setScoreData] = useState<ATSScoreResponse | null>(null)
+
+  // Hydrate from persisted metadata so breakdown survives refresh/navigation.
+  // Falls back to null (shows "not checked yet" state) when no data exists.
+  const [scoreData, setScoreData] = useState<ATSScoreResponse | null>(() => {
+    const saved = resume.metadata.atsScoreData
+    if (saved && saved.score > 0) return saved as ATSScoreResponse
+    return null
+  })
 
   const handleCheckScore = useCallback(async () => {
     clearError()
@@ -92,9 +99,13 @@ export const ATSScoreDisplay = memo(function ATSScoreDisplay({ resume, language,
       const result = await calculateATSScore(resume, language)
       if (result) {
         setScoreData(result)
-        // Persist ATS score into resume metadata so ResumeCard badge stays in sync
+        // Persist both the summary score (for badge) AND full data (for breakdown panel)
         updateResume(resume.id, {
-          metadata: { ...resume.metadata, atsScore: result.score },
+          metadata: {
+            ...resume.metadata,
+            atsScore: result.score,
+            atsScoreData: result,
+          },
         })
       }
     } catch {
