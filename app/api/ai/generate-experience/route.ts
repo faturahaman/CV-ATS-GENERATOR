@@ -30,36 +30,42 @@ export async function POST(request: NextRequest) {
 
     const safeJobContext = sanitiseForPrompt(jobContext)
 
-    const prompt = `You are an ATS resume expert.
-Generate resume achievement bullets.
+ const prompt = `You are an ATS resume expert.
+Generate resume achievement bullets using ONLY the information provided in the input context below.
 
-INPUT
+INPUT CONTEXT:
 ${safeJobContext}
 
 Language: ${language}
 
-Requirements:
-- Generate max 4 point
-- Every bullet must start with a strong action verb
-- Every bullet must include measurable impact
-- Include metrics whenever possible
-- Follow XYZ Formula: Accomplished X as measured by Y by doing Z
-- Maximum Character 4 point and make sure it the word is dense and also containd 
-- Never Lie and do too much if the User is Not Relevan
+STRICT GROUNDING RULES (highest priority):
+- Use ONLY facts, numbers, scope, and outcomes that are explicitly stated or clearly implied in the input context.
+- Do NOT invent metrics, percentages, ratings, follower/subscriber counts, timeframes, or outcomes that are not present in the input.
+- If the input context already contains specific numbers or results, extract and highlight them clearly in the bullets.
+- If the input context has NO measurable outcome for a particular point, write that bullet using clear scope and action instead — do not fabricate a number to fill the XYZ formula.
+- Do not imply ownership, leadership, or scale beyond what the input supports.
 
-Good examples:
+Bullet writing requirements:
+- Maximum 4 bullets
+- Each bullet starts with a strong action verb
+- Each bullet should be dense and specific — pack in the concrete details from the input (what was done, on what, for whom, with what result if stated) rather than being vague
+- When a measurable outcome IS available in the input, follow the structure: Accomplished X as measured by Y by doing Z
+- When no measurable outcome is available, use: strong action verb + specific scope + purpose/context
+
+Good examples (when metrics are present in the input):
 Increased application performance by 35% through code splitting and lazy loading.
 Reduced deployment time by 50% by implementing CI/CD automation.
-Improved API response speed by 25% through database query optimization.
 
+Good example (when no metric is present in the input):
+Directed, wrote, and edited a short film from script to final cut, taking full creative ownership of the project.
 
-Include:
+Include where supported by the input:
 - technical skills
 - business impact
 - ownership
 - collaboration
 
-Avoid:
+Avoid starting bullets with:
 - responsible for
 - worked on
 - helped with
@@ -69,14 +75,10 @@ Avoid:
 CRITICAL OUTPUT RULES:
 - Plain text only
 - One bullet per line
-- No markdown
-- No asterisks
-- No numbering
-- No headings
-- No explanations
+- No markdown, no asterisks, no numbering, no headings
 - No bullet prefixes (no -, •, *)
-
-Return only achievement statements.`
+- No explanations
+- Return only the achievement statements, nothing else`
 
     const raw = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 600 })
     const cleaned = cleanAIOutput(raw)

@@ -62,6 +62,8 @@ Writing requirements:
 
 OUTPUT FORMAT:
 - Plain text only
+- Max character is 500
+- no line breaks or paraghraph
 - No markdown, no headings, no bold, no italics
 - No bullet points or numbering
 - No code blocks

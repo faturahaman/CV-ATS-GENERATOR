@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const safeJobTitle = sanitiseForPrompt(jobTitle)
 
-  const prompt = `
+ const prompt = `
 You are an elite ATS resume optimization expert and recruiter.
 
 Generate the most relevant resume skills for the following role.
@@ -44,7 +44,7 @@ ${language}
 
 Requirements:
 
-- Generate skills commonly found in real job descriptions
+- Generate skills commonly found in real job descriptions for this role
 - Prioritize ATS keywords used by recruiters
 - Prioritize skills that improve candidate-job matching
 - Include a balanced mix of:
@@ -55,19 +55,21 @@ Requirements:
   - Industry-relevant competencies
 
 - Focus on skills that increase interview potential
-- Focus on modern and relevant skills
+- Focus on modern and currently relevant skills
 - Total: 10-15 skills
 
 Guidelines:
 
 - Infer the most likely industry and role requirements from the job title
+- If the job title is vague, generic, or ambiguous, use the most common/standard interpretation rather than a narrow or unusual one
 - Include role-specific competencies
 - Include transferable professional skills when appropriate
 - Include commonly requested recruiter keywords
+- Write every skill name in ${language === 'ID' ? 'Bahasa Indonesia' : 'English'}, using the terms recruiters in that language actually use (keep widely-used English tool/technology names as-is even in Bahasa Indonesia output, e.g. "Microsoft Excel", "Git")
 
 Avoid:
 
-- Duplicate skills
+- Duplicate or near-duplicate skills
 - Outdated skills
 - Generic personality traits
 - Buzzwords without professional value
