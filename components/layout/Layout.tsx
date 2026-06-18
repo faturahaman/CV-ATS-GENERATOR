@@ -25,12 +25,12 @@ function Footer() {
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()}{' '}
           <a
-            href="https://rifatur.io"
+            href="https://rifatur.site"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-foreground transition-colors"
           >
-            rifatur.io
+            rifatur.site
           </a>
           . All rights reserved.
         </p>

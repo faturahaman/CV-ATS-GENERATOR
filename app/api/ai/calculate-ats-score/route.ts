@@ -123,10 +123,6 @@ export async function POST(request: NextRequest) {
     }
 
     const resume = parseResult.data
-
-    // Build plain-text resume for the prompt — every user-controlled field
-    // must go through sanitiseForPrompt to prevent prompt injection via
-    // resume content (e.g. a description field containing fake instructions).
     const s = sanitiseForPrompt
     const lines: string[] = []
     lines.push(`Name: ${s(resume.personalDetails.fullName)}`)
