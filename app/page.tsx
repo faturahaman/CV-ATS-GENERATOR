@@ -5,13 +5,45 @@ import { useResumeStore } from '@/store/resume-store'
 import { ResumeListView } from '@/components/resume-list/ResumeListView'
 import { Header } from '@/components/layout/Header'
 import { translations } from '@/i18n/translations'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 
 const siteUrl = 'https://cv-maker.riffatur.site'
 
-// JSON-LD: WebSite + WebApplication + Organization
+// ─── FAQ data ────────────────────────────────────────────────────────────────
+const faqs = [
+  {
+    q: 'Apa itu CV ATS?',
+    a: 'CV ATS (Applicant Tracking System) adalah format CV yang dirancang agar bisa dibaca dan diproses oleh sistem rekrutmen otomatis. CV ATS mengutamakan struktur teks yang bersih, keyword yang relevan, dan format standar agar tidak tersaring sebelum sampai ke rekruter.',
+  },
+  {
+    q: 'Apakah CV Maker ATS Gratis ini benar-benar gratis?',
+    a: 'Ya, sepenuhnya gratis. Tidak perlu daftar akun, tidak perlu kartu kredit. Semua fitur — termasuk AI Resume Builder, ATS Score Checker, dan export ke PDF & DOCX — bisa kamu gunakan langsung tanpa biaya.',
+  },
+  {
+    q: 'Apakah saya bisa download CV ke PDF?',
+    a: 'Ya. Setelah selesai mengisi CV, kamu bisa export langsung ke PDF atau DOCX (Word) dengan satu klik. Format PDF cocok untuk dikirim ke rekruter, sedangkan DOCX cocok jika kamu perlu mengeditnya lebih lanjut.',
+  },
+  {
+    q: 'Apakah CV Maker ini cocok untuk fresh graduate?',
+    a: 'Sangat cocok. Template CV kami dirancang khusus agar ramah ATS untuk semua level — termasuk fresh graduate, mahasiswa yang melamar magang, hingga profesional berpengalaman. AI akan membantu kamu menulis summary dan deskripsi pengalaman yang meyakinkan meski pengalaman kerja masih terbatas.',
+  },
+  {
+    q: 'Apakah mendukung Bahasa Indonesia?',
+    a: 'Ya. CV Maker ini mendukung dua bahasa: Bahasa Indonesia dan English. Kamu bisa switch bahasa antarmuka kapan saja, dan AI-nya pun bisa menghasilkan konten dalam Bahasa Indonesia maupun Inggris sesuai kebutuhanmu.',
+  },
+  {
+    q: 'Apakah data CV saya aman?',
+    a: 'Data kamu tersimpan 100% di browser kamu sendiri (localStorage) — tidak dikirim ke server manapun. CV kamu sepenuhnya privat dan aman, bahkan saat kamu offline pun bisa tetap mengedit.',
+  },
+  {
+    q: 'Bagaimana cara cek skor ATS CV saya?',
+    a: 'Setelah mengisi CV, buka tab "ATS Score" di editor. Sistem akan menganalisis CV kamu secara otomatis dan memberikan skor beserta rekomendasi spesifik — mulai dari kelengkapan kontak, kualitas summary, hingga keyword skills yang perlu ditambahkan.',
+  },
+]
+
+// ─── JSON-LD schemas ─────────────────────────────────────────────────────────
 const jsonLd = [
-  // 1. WebSite — enables Sitelinks & brand recognition
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -21,16 +53,7 @@ const jsonLd = [
     description:
       'CV Maker ATS Gratis untuk membuat CV profesional yang ramah ATS. Buat CV online gratis dengan template modern, AI Resume Builder, dan download PDF secara instan.',
     inLanguage: ['id', 'en'],
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
   },
-  // 2. WebApplication — SaaS tool details
   {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -67,7 +90,6 @@ const jsonLd = [
       url: 'https://riffatur.site',
     },
   },
-  // 3. Organization — builds brand authority
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -75,14 +97,44 @@ const jsonLd = [
     url: 'https://riffatur.site',
     logo: `${siteUrl}/logos.png`,
     sameAs: ['https://riffatur.site'],
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'customer support',
-      availableLanguage: ['Indonesian', 'English'],
-    },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: a,
+      },
+    })),
   },
 ]
 
+// ─── FAQ accordion item ───────────────────────────────────────────────────────
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="border-b border-border/60 last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
+        aria-expanded={open}
+      >
+        <span>{q}</span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <p className="pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
+      )}
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const router = useRouter()
   const deleteResume = useResumeStore((s) => s.deleteResume)
@@ -90,21 +142,13 @@ export default function HomePage() {
   const language = useResumeStore((s) => s.language)
   const t = translations[language]
 
-  const handleEdit = (id: string) => {
-    router.push(`/resumes/${id}`)
-  }
-
-  const handleDuplicate = (id: string) => {
-    duplicateResume(id)
-  }
-
-  const handleDelete = (id: string) => {
-    deleteResume(id)
-  }
+  const handleEdit = (id: string) => router.push(`/resumes/${id}`)
+  const handleDuplicate = (id: string) => duplicateResume(id)
+  const handleDelete = (id: string) => deleteResume(id)
 
   return (
     <>
-      {/* JSON-LD structured data — 3 schemas for Google */}
+      {/* JSON-LD structured data — WebSite + WebApplication + Organization + FAQPage */}
       {jsonLd.map((schema, i) => (
         <script
           key={i}
@@ -115,33 +159,50 @@ export default function HomePage() {
 
       <Header />
 
-      {/* SEO text block — readable by crawlers, hidden from UI */}
-      <section className="sr-only" aria-hidden="false">
-        <h1>CV Maker ATS Gratis — Pembuat CV Online Profesional</h1>
-        <p>
-          CV Maker ATS Gratis untuk membuat CV profesional yang ramah ATS. Buat CV online gratis
-          dengan template modern, AI Resume Builder, dan download PDF secara instan. Cocok untuk
-          fresh graduate, mahasiswa magang, dan profesional.
-        </p>
-        <ul>
-          <li>CV maker gratis tanpa daftar akun</li>
-          <li>ATS CV maker dengan cek skor ATS otomatis</li>
-          <li>Pembuat CV ATS gratis berbahasa Indonesia</li>
-          <li>Export CV ke PDF dan Word (DOCX)</li>
-          <li>Template CV ATS friendly untuk fresh graduate</li>
-          <li>AI resume builder untuk summary dan pengalaman kerja</li>
-          <li>Resume builder gratis untuk lamaran kerja</li>
-          <li>Generator CV gratis dan resume ats online</li>
-        </ul>
-      </section>
-
       <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+
+        {/* ── Visible H1 — seen by users AND crawlers ── */}
+        <div className="mb-10 border-b border-border/60 pb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight mb-2">
+            {language === 'ID'
+              ? 'CV Maker ATS Gratis — Buat CV Profesional Online dengan AI'
+              : 'Free ATS CV Maker — Build a Professional Resume Online with AI'}
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-xl">
+            {language === 'ID'
+              ? 'Buat CV ATS gratis, cek skor ATS otomatis, dan download PDF dalam hitungan menit. Gratis selamanya, tanpa daftar.'
+              : 'Create an ATS-friendly CV for free, check your ATS score instantly, and download as PDF. Free forever, no sign-up required.'}
+          </p>
+        </div>
+
+        {/* ── Resume list (h2 inside) ── */}
         <ResumeListView
           onCreateNew={() => { }}
           onEdit={handleEdit}
           onDuplicate={handleDuplicate}
           onDelete={handleDelete}
         />
+
+        {/* ── FAQ section ── */}
+        <section className="mt-20" aria-labelledby="faq-heading">
+          <h2
+            id="faq-heading"
+            className="text-lg font-semibold text-foreground mb-1"
+          >
+            {language === 'ID' ? 'Pertanyaan Umum' : 'Frequently Asked Questions'}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            {language === 'ID'
+              ? 'Semua yang perlu kamu tahu tentang CV Maker ATS Gratis ini.'
+              : 'Everything you need to know about this free ATS CV Maker.'}
+          </p>
+          <div className="rounded-lg border border-border/60 px-4">
+            {faqs.map((faq) => (
+              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+            ))}
+          </div>
+        </section>
+
       </main>
 
       <footer className="border-t border-border/60 py-6">

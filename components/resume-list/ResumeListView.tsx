@@ -45,12 +45,12 @@ export function ResumeListView({
       <div className="border-b border-border/60 pb-8 mb-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1
+            <h2
               className="text-3xl sm:text-4xl font-bold text-foreground leading-tight mb-2"
               style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
             >
               {t.resumeList.title}
-            </h1>
+            </h2>
             <p className="text-base text-muted-foreground">
               {resumes.length === 0
                 ? t.resumeList.empty
