@@ -86,6 +86,7 @@ export interface CertificationEntry {
   issuingOrganization: string;
   issueDate: string; // YYYY-MM-DD format
   expirationDate?: string; // YYYY-MM-DD format
+  neverExpires?: boolean; // true = no expiration date
 }
 
 /**

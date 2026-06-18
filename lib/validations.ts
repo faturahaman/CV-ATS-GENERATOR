@@ -247,8 +247,11 @@ export const CertificationEntrySchema = z.object({
   issueDate: dateSchema,
   
   expirationDate: dateSchema.optional().or(z.literal('')),
+
+  neverExpires: z.boolean().optional(),
 }).refine(
   (data) => {
+    if (data.neverExpires) return true;
     if (!data.expirationDate || data.expirationDate === '') return true;
     return new Date(data.issueDate) < new Date(data.expirationDate);
   },

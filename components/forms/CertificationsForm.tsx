@@ -4,7 +4,7 @@ import { memo, useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, Check, X, Infinity } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -101,10 +101,15 @@ interface EntryFormProps {
 }
 
 function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
+  const [neverExpires, setNeverExpires] = useState<boolean>(
+    initial?.neverExpires ?? false
+  )
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<CertFormValues>({
     resolver: zodResolver(CertFormSchema),
     defaultValues: {
@@ -116,15 +121,24 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
     mode: 'onChange',
   })
 
+  const handleNeverExpiresChange = (checked: boolean) => {
+    setNeverExpires(checked)
+    if (checked) {
+      setValue('expirationDate', '', { shouldValidate: false })
+    }
+  }
+
   const onSubmit = (values: CertFormValues) => {
     onSave({
       id: initial?.id ?? generateUUID(),
       certificationName: values.certificationName,
       issuingOrganization: values.issuingOrganization,
       issueDate: toStorageDate(values.issueDate),
-      expirationDate: values.expirationDate
-        ? toStorageDate(values.expirationDate)
-        : undefined,
+      expirationDate:
+        neverExpires || !values.expirationDate
+          ? undefined
+          : toStorageDate(values.expirationDate),
+      neverExpires,
     })
   }
 
@@ -186,20 +200,58 @@ function EntryForm({ initial, onSave, onCancel }: EntryFormProps) {
           />
         </Field>
 
-        <Field
-          label="Expiration Date"
-          id="cert-expirationDate"
-          error={errors.expirationDate?.message}
-        >
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="cert-expirationDate" className="text-sm font-medium leading-none">
+              Expiration Date
+            </label>
+            <label
+              htmlFor="cert-neverExpires"
+              className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none"
+            >
+              <div
+                role="checkbox"
+                aria-checked={neverExpires}
+                id="cert-neverExpires"
+                tabIndex={0}
+                onClick={() => handleNeverExpiresChange(!neverExpires)}
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault()
+                    handleNeverExpiresChange(!neverExpires)
+                  }
+                }}
+                className={cn(
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                  neverExpires
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-input bg-background'
+                )}
+              >
+                {neverExpires && <Check className="h-2.5 w-2.5" />}
+              </div>
+              <Infinity className="h-3 w-3" />
+              No Expiration
+            </label>
+          </div>
           <Input
             id="cert-expirationDate"
             type="month"
-            className={inputCls(!!errors.expirationDate)}
+            disabled={neverExpires}
+            className={cn(
+              inputCls(!!errors.expirationDate),
+              neverExpires && 'cursor-not-allowed opacity-40'
+            )}
             aria-invalid={!!errors.expirationDate}
             aria-describedby={errors.expirationDate ? 'cert-expirationDate-error' : undefined}
             {...register('expirationDate')}
           />
-        </Field>
+          {errors.expirationDate && (
+            <p id="cert-expirationDate-error" role="alert" className="text-xs text-destructive">
+              {errors.expirationDate.message}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-end gap-2">
@@ -226,7 +278,9 @@ interface EntryCardProps {
 
 function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const dateRange = entry.expirationDate
+  const dateRange = entry.neverExpires
+    ? `${formatDisplayDate(entry.issueDate)} – No Expiration`
+    : entry.expirationDate
     ? `${formatDisplayDate(entry.issueDate)} – ${formatDisplayDate(entry.expirationDate)}`
     : formatDisplayDate(entry.issueDate)
 
@@ -286,7 +340,9 @@ function EntryCard({ entry, onEdit, onDelete }: EntryCardProps) {
         <div className="border-t px-4 py-3">
           <p className="text-xs text-muted-foreground">
             Issued: {formatDisplayDate(entry.issueDate)}
-            {entry.expirationDate
+            {entry.neverExpires
+              ? ' · No Expiration'
+              : entry.expirationDate
               ? ` · Expires: ${formatDisplayDate(entry.expirationDate)}`
               : ' · No expiration'}
           </p>

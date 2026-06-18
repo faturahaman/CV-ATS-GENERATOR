@@ -37,44 +37,36 @@ export async function POST(request: NextRequest) {
     const safeJobTitle = sanitiseForPrompt(jobTitle)
     const safeSkills = skills.map(sanitiseForPrompt)
 
-    const prompt = `You are an elite ATS resume writer and career strategist.
-Create a Professional Summary for a resume.
+const prompt = `You are an ATS resume writer.
+Write a Professional Summary for a resume using ONLY the information explicitly provided below.
 
 INPUT
 Job Title: ${safeJobTitle}
 Skills: ${safeSkills.join(', ')}
 Language: ${language}
 
-Requirements:
-- ATS-friendly writing
-- Include relevant industry keywords naturally
-- Include both hard skills and soft skills
-- Focus on achievements, value, and impact
-- Sound credible and realistic
-- Keep concise and recruiter-friendly
-- 3-5 sentences only
-- make sure it limit 500 char
-- Do not use first person pronouns
+STRICT GROUNDING RULES (highest priority — follow these even if it makes the summary more general):
+- Use ONLY the Job Title and Skills listed above as factual basis.
+- Do NOT invent or imply: years/duration of experience, number of projects, specific achievements, metrics or percentages, team size, company names, industries, or certifications that are not in the input.
+- Do NOT phrase anything as a completed accomplishment (e.g. "increased sales by X%", "led a team of X", "successfully delivered X projects") since no such data was provided.
+- Instead, describe the candidate's professional identity and capability based on the job title and skills — framed as strengths/competencies, not as verified past results.
+- It is fine to say what someone in this role with these skills is generally able to contribute, as long as it stays general and is not stated as a fact about this specific person's history.
 
-Avoid these buzzwords:
-hardworking, motivated individual, passionate professional, results-oriented professional, team player, dynamic professional, highly dedicated
+Writing requirements:
+- ATS-friendly; weave the listed skills naturally as keywords
+- Blend hard skills and soft skills from the list naturally, not as a list
+- Concise and recruiter-friendly, 3-5 sentences, strictly under 500 characters total
+- No first-person pronouns
+- Avoid these buzzwords: hardworking, motivated individual, passionate professional, results-oriented professional, team player, dynamic professional, highly dedicated
+- Sound natural and credible, not generic, robotic, or templated
 
-Do not exaggerate experience.
-Do not invent certifications.
-Do not invent companies.
-
-CRITICAL OUTPUT RULES:
-- Return plain text only
-- No markdown
-- No headings
-- No bold
-- No italics
-- No bullet points
-- No numbering
+OUTPUT FORMAT:
+- Plain text only
+- No markdown, no headings, no bold, no italics
+- No bullet points or numbering
 - No code blocks
 - No quotation marks
-
-Return only the summary content.`
+- Return only the summary text, nothing else`
 
     const raw = await callOpenRouter(prompt, { temperature: 0.7, maxTokens: 300 })
     const summary = cleanAIOutput(raw)

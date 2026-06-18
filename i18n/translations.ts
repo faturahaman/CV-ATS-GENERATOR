@@ -217,6 +217,12 @@ export interface Translations {
     english: string;
     indonesian: string;
   };
+
+  // Privacy notice
+  privacy: {
+    message: string;
+    dismiss: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -416,6 +422,11 @@ export const translations: Record<Language, Translations> = {
       english: 'English',
       indonesian: 'Indonesian',
     },
+
+    privacy: {
+      message: 'Your data is stored locally in your browser — nothing is sent to any server. Your resume stays completely private.',
+      dismiss: 'Got it',
+    },
   },
 
   ID: {
@@ -613,6 +624,11 @@ export const translations: Record<Language, Translations> = {
     language: {
       english: 'English',
       indonesian: 'Indonesian',
+    },
+
+    privacy: {
+      message: 'Data kamu tersimpan di browser masing-masing — tidak ada yang dikirim ke server manapun. CV kamu sepenuhnya pribadi dan aman.',
+      dismiss: 'Mengerti',
     },
   },
 };
