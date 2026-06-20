@@ -10,39 +10,72 @@ import { useState } from 'react'
 
 const siteUrl = 'https://cv-maker.riffatur.site'
 
-// ─── FAQ data ────────────────────────────────────────────────────────────────
-const faqs = [
-  {
-    q: 'Apa itu CV ATS?',
-    a: 'CV ATS (Applicant Tracking System) adalah format CV yang dirancang agar bisa dibaca dan diproses oleh sistem rekrutmen otomatis. CV ATS mengutamakan struktur teks yang bersih, keyword yang relevan, dan format standar agar tidak tersaring sebelum sampai ke rekruter.',
-  },
-  {
-    q: 'Apakah CV Maker ATS Gratis ini benar-benar gratis?',
-    a: 'Ya, sepenuhnya gratis. Tidak perlu daftar akun, tidak perlu kartu kredit. Semua fitur — termasuk AI Resume Builder, ATS Score Checker, dan export ke PDF & DOCX — bisa kamu gunakan langsung tanpa biaya.',
-  },
-  {
-    q: 'Apakah saya bisa download CV ke PDF?',
-    a: 'Ya. Setelah selesai mengisi CV, kamu bisa export langsung ke PDF atau DOCX (Word) dengan satu klik. Format PDF cocok untuk dikirim ke rekruter, sedangkan DOCX cocok jika kamu perlu mengeditnya lebih lanjut.',
-  },
-  {
-    q: 'Apakah CV Maker ini cocok untuk fresh graduate?',
-    a: 'Sangat cocok. Template CV kami dirancang khusus agar ramah ATS untuk semua level — termasuk fresh graduate, mahasiswa yang melamar magang, hingga profesional berpengalaman. AI akan membantu kamu menulis summary dan deskripsi pengalaman yang meyakinkan meski pengalaman kerja masih terbatas.',
-  },
-  {
-    q: 'Apakah mendukung Bahasa Indonesia?',
-    a: 'Ya. CV Maker ini mendukung dua bahasa: Bahasa Indonesia dan English. Kamu bisa switch bahasa antarmuka kapan saja, dan AI-nya pun bisa menghasilkan konten dalam Bahasa Indonesia maupun Inggris sesuai kebutuhanmu.',
-  },
-  {
-    q: 'Apakah data CV saya aman?',
-    a: 'Data kamu tersimpan 100% di browser kamu sendiri (localStorage) — tidak dikirim ke server manapun. CV kamu sepenuhnya privat dan aman, bahkan saat kamu offline pun bisa tetap mengedit.',
-  },
-  {
-    q: 'Bagaimana cara cek skor ATS CV saya?',
-    a: 'Setelah mengisi CV, buka tab "ATS Score" di editor. Sistem akan menganalisis CV kamu secara otomatis dan memberikan skor beserta rekomendasi spesifik — mulai dari kelengkapan kontak, kualitas summary, hingga keyword skills yang perlu ditambahkan.',
-  },
-]
+// ─── FAQ data ─────────────────────────────────────────────────────────────────
+const faqsData = {
+  EN: [
+    {
+      q: 'What is an ATS CV?',
+      a: 'An ATS CV (Applicant Tracking System) is a resume format designed to be parsed by automated recruitment systems. It prioritizes clean text structure, relevant keywords, and a standard layout so your application reaches a human recruiter instead of being filtered out automatically.',
+    },
+    {
+      q: 'Is this ATS CV Maker really free?',
+      a: 'Yes, completely free. No account registration, no credit card required. All features — including the AI Resume Builder, ATS Score Checker, and PDF & DOCX export — are available at no cost.',
+    },
+    {
+      q: 'Can I download my CV as a PDF?',
+      a: 'Yes. Once you finish editing, you can export your CV directly to PDF or DOCX (Word) in one click. PDF is ideal for sending to recruiters, while DOCX is handy if you need to make further edits.',
+    },
+    {
+      q: 'Is this CV Maker suitable for fresh graduates?',
+      a: 'Absolutely. Our CV template is designed to be ATS-friendly for all experience levels — from fresh graduates and internship applicants to seasoned professionals. The AI will help you write a compelling summary and experience descriptions even if your work history is limited.',
+    },
+    {
+      q: 'Does it support Bahasa Indonesia?',
+      a: 'Yes. The tool supports two languages: Bahasa Indonesia and English. You can switch the interface language at any time, and the AI can generate content in either language based on your preference.',
+    },
+    {
+      q: 'Is my CV data safe?',
+      a: 'Your data is stored 100% in your own browser (localStorage) — nothing is sent to any server. Your CV is completely private and secure. You can even continue editing while offline.',
+    },
+    {
+      q: 'How do I check my ATS score?',
+      a: 'After filling in your CV, open the "ATS Score" tab in the editor. The system will automatically analyze your CV and return a score along with specific recommendations — from contact completeness and summary quality to missing skill keywords.',
+    },
+  ],
+  ID: [
+    {
+      q: 'Apa itu CV ATS?',
+      a: 'CV ATS (Applicant Tracking System) adalah format CV yang dirancang agar bisa dibaca dan diproses oleh sistem rekrutmen otomatis. CV ATS mengutamakan struktur teks yang bersih, keyword yang relevan, dan format standar agar tidak tersaring sebelum sampai ke rekruter.',
+    },
+    {
+      q: 'Apakah CV Maker ATS Gratis ini benar-benar gratis?',
+      a: 'Ya, sepenuhnya gratis. Tidak perlu daftar akun, tidak perlu kartu kredit. Semua fitur — termasuk AI Resume Builder, ATS Score Checker, dan export ke PDF & DOCX — bisa kamu gunakan langsung tanpa biaya.',
+    },
+    {
+      q: 'Apakah saya bisa download CV ke PDF?',
+      a: 'Ya. Setelah selesai mengisi CV, kamu bisa export langsung ke PDF atau DOCX (Word) dengan satu klik. Format PDF cocok untuk dikirim ke rekruter, sedangkan DOCX cocok jika kamu perlu mengeditnya lebih lanjut.',
+    },
+    {
+      q: 'Apakah CV Maker ini cocok untuk fresh graduate?',
+      a: 'Sangat cocok. Template CV kami dirancang khusus agar ramah ATS untuk semua level — termasuk fresh graduate, mahasiswa yang melamar magang, hingga profesional berpengalaman. AI akan membantu kamu menulis summary dan deskripsi pengalaman yang meyakinkan meski pengalaman kerja masih terbatas.',
+    },
+    {
+      q: 'Apakah mendukung Bahasa Indonesia?',
+      a: 'Ya. CV Maker ini mendukung dua bahasa: Bahasa Indonesia dan English. Kamu bisa switch bahasa antarmuka kapan saja, dan AI-nya pun bisa menghasilkan konten dalam Bahasa Indonesia maupun Inggris sesuai kebutuhanmu.',
+    },
+    {
+      q: 'Apakah data CV saya aman?',
+      a: 'Data kamu tersimpan 100% di browser kamu sendiri (localStorage) — tidak dikirim ke server manapun. CV kamu sepenuhnya privat dan aman, bahkan saat kamu offline pun bisa tetap mengedit.',
+    },
+    {
+      q: 'Bagaimana cara cek skor ATS CV saya?',
+      a: 'Setelah mengisi CV, buka tab "ATS Score" di editor. Sistem akan menganalisis CV kamu secara otomatis dan memberikan skor beserta rekomendasi spesifik — mulai dari kelengkapan kontak, kualitas summary, hingga keyword skills yang perlu ditambahkan.',
+    },
+  ],
+}
 
 // ─── JSON-LD schemas ─────────────────────────────────────────────────────────
+// FAQPage uses Indonesian by default (primary audience for Google ID)
 const jsonLd = [
   {
     '@context': 'https://schema.org',
@@ -101,7 +134,7 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map(({ q, a }) => ({
+    mainEntity: faqsData.ID.map(({ q, a }) => ({
       '@type': 'Question',
       name: q,
       acceptedAnswer: {
@@ -197,7 +230,7 @@ export default function HomePage() {
               : 'Everything you need to know about this free ATS CV Maker.'}
           </p>
           <div className="rounded-lg border border-border/60 px-4">
-            {faqs.map((faq) => (
+            {faqsData[language].map((faq) => (
               <FaqItem key={faq.q} q={faq.q} a={faq.a} />
             ))}
           </div>
