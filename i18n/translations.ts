@@ -154,6 +154,36 @@ export interface Translations {
     exportAsDocx: string;
     exportAsText: string;
     exporting: string;
+    intro: string;
+    pdfDescription: string;
+    docxDescription: string;
+    generatingPdf: string;
+    generatingDocx: string;
+    recommended: string;
+    addContentFirst: string;
+  };
+
+  // Theme
+  theme: {
+    toggle: string;
+    light: string;
+    dark: string;
+    system: string;
+  };
+
+  // Landing page content (home)
+  home: {
+    heroTitle: string;
+    heroSubtitle: string;
+    featuresTitle: string;
+    features: { title: string; desc: string }[];
+    howTitle: string;
+    howSubtitle: string;
+    steps: { title: string; desc: string }[];
+    aboutTitle: string;
+    aboutParagraphs: string[];
+    faqTitle: string;
+    faqSubtitle: string;
   };
 
   // Progress
@@ -365,6 +395,48 @@ export const translations: Record<Language, Translations> = {
       exportAsDocx: 'Export as DOCX',
       exportAsText: 'Export as Text',
       exporting: 'Exporting...',
+      intro: 'Download your resume in an ATS-friendly format. Files are named CV_[Name]_[Date].',
+      pdfDescription: 'Best for sending to recruiters — pixel-perfect and print-ready.',
+      docxDescription: 'Best if you need to make further edits in Word.',
+      generatingPdf: 'Generating PDF…',
+      generatingDocx: 'Generating DOCX…',
+      recommended: 'Recommended',
+      addContentFirst: 'Add your name or at least one section before exporting.',
+    },
+
+    theme: {
+      toggle: 'Toggle theme',
+      light: 'Light',
+      dark: 'Dark',
+      system: 'System',
+    },
+
+    home: {
+      heroTitle: 'Free ATS CV Maker — Build a Professional Resume Online with AI',
+      heroSubtitle:
+        'Create an ATS-friendly CV for free, check your ATS score instantly, and download as PDF. Free forever, no sign-up required.',
+      featuresTitle: 'Everything you need to land the interview',
+      features: [
+        { title: 'AI Resume Builder', desc: 'Generate compelling summaries and experience bullet points tailored to your target role.' },
+        { title: 'ATS Score Checker', desc: 'See exactly how ATS-friendly your CV is, with specific, actionable recommendations.' },
+        { title: 'PDF & DOCX Export', desc: 'Download a recruiter-ready PDF or an editable Word document in one click.' },
+        { title: '100% Private', desc: 'Your data never leaves your browser. No account, no tracking, no server.' },
+      ],
+      howTitle: 'How it works',
+      howSubtitle: 'From blank page to a polished, ATS-optimized CV in four steps.',
+      steps: [
+        { title: 'Fill in your details', desc: 'Add your personal info, experience, education, and skills.' },
+        { title: 'Optimize with AI', desc: 'Let AI write or improve your summary and experience descriptions.' },
+        { title: 'Check your ATS score', desc: 'Analyze your CV and fix the issues that matter most.' },
+        { title: 'Download & apply', desc: 'Export to PDF or DOCX and start applying with confidence.' },
+      ],
+      aboutTitle: 'Why an ATS-friendly CV matters',
+      aboutParagraphs: [
+        'Most companies use an Applicant Tracking System (ATS) to filter resumes before a human ever reads them. A CV with a complex layout, unusual fonts, or missing keywords can be rejected automatically — no matter how qualified you are.',
+        'This free ATS CV Maker generates a clean, single-column, keyword-rich resume that both software and recruiters can read easily. Combined with the built-in AI writer and ATS score checker, it helps you get past the filter and in front of a hiring manager.',
+      ],
+      faqTitle: 'Frequently Asked Questions',
+      faqSubtitle: 'Everything you need to know about this free ATS CV Maker.',
     },
 
     progress: {
@@ -568,6 +640,48 @@ export const translations: Record<Language, Translations> = {
       exportAsDocx: 'Ekspor sebagai DOCX',
       exportAsText: 'Ekspor sebagai Teks',
       exporting: 'Mengekspor...',
+      intro: 'Unduh CV kamu dalam format ramah ATS. File dinamai CV_[Nama]_[Tanggal].',
+      pdfDescription: 'Paling cocok untuk dikirim ke rekruter — rapi dan siap cetak.',
+      docxDescription: 'Cocok jika kamu perlu mengeditnya lagi di Word.',
+      generatingPdf: 'Membuat PDF…',
+      generatingDocx: 'Membuat DOCX…',
+      recommended: 'Disarankan',
+      addContentFirst: 'Isi nama atau minimal satu bagian sebelum mengekspor.',
+    },
+
+    theme: {
+      toggle: 'Ganti tema',
+      light: 'Terang',
+      dark: 'Gelap',
+      system: 'Sistem',
+    },
+
+    home: {
+      heroTitle: 'CV Maker ATS Gratis — Buat CV Profesional Online dengan AI',
+      heroSubtitle:
+        'Buat CV ATS gratis, cek skor ATS otomatis, dan download PDF dalam hitungan menit. Gratis selamanya, tanpa daftar.',
+      featuresTitle: 'Semua yang kamu butuhkan untuk lolos interview',
+      features: [
+        { title: 'AI Resume Builder', desc: 'Buat ringkasan dan poin pengalaman yang meyakinkan, disesuaikan dengan posisi impianmu.' },
+        { title: 'Cek Skor ATS', desc: 'Lihat seberapa ramah ATS CV kamu, lengkap dengan rekomendasi yang spesifik dan bisa langsung diterapkan.' },
+        { title: 'Export PDF & DOCX', desc: 'Download CV siap kirim dalam format PDF atau dokumen Word yang bisa diedit dengan satu klik.' },
+        { title: '100% Privat', desc: 'Data kamu tidak pernah keluar dari browser. Tanpa akun, tanpa pelacakan, tanpa server.' },
+      ],
+      howTitle: 'Cara kerjanya',
+      howSubtitle: 'Dari halaman kosong menjadi CV yang rapi dan teroptimasi ATS dalam empat langkah.',
+      steps: [
+        { title: 'Isi data kamu', desc: 'Tambahkan data pribadi, pengalaman, pendidikan, dan keahlian.' },
+        { title: 'Optimasi dengan AI', desc: 'Biarkan AI menulis atau memperbaiki ringkasan dan deskripsi pengalamanmu.' },
+        { title: 'Cek skor ATS', desc: 'Analisis CV kamu dan perbaiki hal-hal yang paling penting.' },
+        { title: 'Download & lamar', desc: 'Export ke PDF atau DOCX dan mulai melamar dengan percaya diri.' },
+      ],
+      aboutTitle: 'Kenapa CV ramah ATS itu penting',
+      aboutParagraphs: [
+        'Kebanyakan perusahaan menggunakan Applicant Tracking System (ATS) untuk menyaring CV sebelum dibaca manusia. CV dengan layout rumit, font tidak biasa, atau keyword yang kurang bisa langsung ditolak sistem — sebagus apa pun kualifikasimu.',
+        'CV Maker ATS Gratis ini membuat CV satu kolom yang bersih dan kaya keyword, yang mudah dibaca baik oleh software maupun rekruter. Dipadukan dengan AI writer dan cek skor ATS bawaan, kamu jadi lebih mudah lolos filter dan sampai ke tangan HR.',
+      ],
+      faqTitle: 'Pertanyaan Umum',
+      faqSubtitle: 'Semua yang perlu kamu tahu tentang CV Maker ATS Gratis ini.',
     },
 
     progress: {

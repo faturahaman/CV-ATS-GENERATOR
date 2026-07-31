@@ -4,8 +4,16 @@ import { useRouter } from 'next/navigation'
 import { useResumeStore } from '@/store/resume-store'
 import { ResumeListView } from '@/components/resume-list/ResumeListView'
 import { Header } from '@/components/layout/Header'
+import { Reveal } from '@/components/common/Reveal'
 import { translations } from '@/i18n/translations'
-import { ShieldCheck, ChevronDown } from 'lucide-react'
+import {
+  ShieldCheck,
+  ChevronDown,
+  Sparkles,
+  BarChart3,
+  FileDown,
+  Lock,
+} from 'lucide-react'
 import { useState } from 'react'
 
 const siteUrl = 'https://cv-maker.riffatur.site'
@@ -75,7 +83,7 @@ const faqsData = {
 }
 
 // ─── JSON-LD schemas ─────────────────────────────────────────────────────────
-// FAQPage uses Indonesian by default (primary audience for Google ID)
+// FAQPage merges both languages so Google can surface either locale's rich result.
 const jsonLd = [
   {
     '@context': 'https://schema.org',
@@ -86,6 +94,11 @@ const jsonLd = [
     description:
       'CV Maker ATS Gratis untuk membuat CV profesional yang ramah ATS. Buat CV online gratis dengan template modern, AI Resume Builder, dan download PDF secara instan.',
     inLanguage: ['id', 'en'],
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
   },
   {
     '@context': 'https://schema.org',
@@ -134,7 +147,7 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqsData.ID.map(({ q, a }) => ({
+    mainEntity: [...faqsData.ID, ...faqsData.EN].map(({ q, a }) => ({
       '@type': 'Question',
       name: q,
       acceptedAnswer: {
@@ -143,9 +156,31 @@ const jsonLd = [
       },
     })),
   },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'Cara membuat CV ATS gratis',
+    description:
+      'Buat CV profesional yang ramah ATS dalam empat langkah: isi data, optimasi dengan AI, cek skor ATS, dan download PDF.',
+    totalTime: 'PT10M',
+    inLanguage: 'id',
+    step: [
+      { '@type': 'HowToStep', position: 1, name: 'Isi data CV', text: 'Masukkan data pribadi, pengalaman, pendidikan, dan keahlian.' },
+      { '@type': 'HowToStep', position: 2, name: 'Optimasi dengan AI', text: 'Gunakan AI untuk menulis atau memperbaiki ringkasan dan deskripsi pengalaman.' },
+      { '@type': 'HowToStep', position: 3, name: 'Cek skor ATS', text: 'Analisis CV kamu dan perbaiki masalah yang paling berpengaruh.' },
+      { '@type': 'HowToStep', position: 4, name: 'Download & lamar', text: 'Export ke PDF atau DOCX lalu mulai melamar pekerjaan.' },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+    ],
+  },
 ]
 
-// ─── FAQ accordion item ───────────────────────────────────────────────────────
+// ─── FAQ accordion item — smooth height animation via grid-rows ─────────────────
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -157,15 +192,26 @@ function FaqItem({ q, a }: { q: string; a: string }) {
       >
         <span>{q}</span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ease-out ${open ? 'rotate-180' : ''}`}
         />
       </button>
-      {open && (
-        <p className="pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
-      )}
+      {/* grid-rows 0fr -> 1fr gives a smooth, content-aware height transition */}
+      <div className={`accordion-content ${open ? 'is-open' : ''}`}>
+        <div className="accordion-inner">
+          <p className="pb-4 text-sm text-muted-foreground leading-relaxed">{a}</p>
+        </div>
+      </div>
     </div>
   )
 }
+
+// ─── Feature icons (keyed to translation order) ─────────────────────────────────
+const featureIcons = [
+  <Sparkles key="0" className="h-5 w-5" />,
+  <BarChart3 key="1" className="h-5 w-5" />,
+  <FileDown key="2" className="h-5 w-5" />,
+  <Lock key="3" className="h-5 w-5" />,
+]
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
@@ -181,7 +227,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* JSON-LD structured data — WebSite + WebApplication + Organization + FAQPage */}
+      {/* JSON-LD structured data */}
       {jsonLd.map((schema, i) => (
         <script
           key={i}
@@ -195,16 +241,12 @@ export default function HomePage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
 
         {/* ── Visible H1 — seen by users AND crawlers ── */}
-        <div className="mb-10 border-b border-border/60 pb-8">
+        <div className="mb-10 border-b border-border/60 pb-8 animate-fade-up">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight mb-2">
-            {language === 'ID'
-              ? 'CV Maker ATS Gratis — Buat CV Profesional Online dengan AI'
-              : 'Free ATS CV Maker — Build a Professional Resume Online with AI'}
+            {t.home.heroTitle}
           </h1>
           <p className="text-sm text-muted-foreground max-w-xl">
-            {language === 'ID'
-              ? 'Buat CV ATS gratis, cek skor ATS otomatis, dan download PDF dalam hitungan menit. Gratis selamanya, tanpa daftar.'
-              : 'Create an ATS-friendly CV for free, check your ATS score instantly, and download as PDF. Free forever, no sign-up required.'}
+            {t.home.heroSubtitle}
           </p>
         </div>
 
@@ -216,24 +258,89 @@ export default function HomePage() {
           onDelete={handleDelete}
         />
 
-        {/* ── FAQ section ── */}
-        <section className="mt-20" aria-labelledby="faq-heading">
-          <h2
-            id="faq-heading"
-            className="text-lg font-semibold text-foreground mb-1"
-          >
-            {language === 'ID' ? 'Pertanyaan Umum' : 'Frequently Asked Questions'}
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            {language === 'ID'
-              ? 'Semua yang perlu kamu tahu tentang CV Maker ATS Gratis ini.'
-              : 'Everything you need to know about this free ATS CV Maker.'}
-          </p>
-          <div className="rounded-lg border border-border/60 px-4">
-            {faqsData[language].map((faq) => (
-              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+        {/* ── Features ── */}
+        <section className="mt-20" aria-labelledby="features-heading">
+          <Reveal>
+            <h2
+              id="features-heading"
+              className="text-lg font-semibold text-foreground mb-6"
+            >
+              {t.home.featuresTitle}
+            </h2>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {t.home.features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 60}>
+                <div className="flex h-full gap-3 rounded-xl border border-border/60 bg-card p-4 transition-all duration-200 ease-out hover:border-border hover:shadow-sm">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    {featureIcons[i]}
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-foreground">{f.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+                  </div>
+                </div>
+              </Reveal>
             ))}
           </div>
+        </section>
+
+        {/* ── How it works ── */}
+        <section className="mt-20" aria-labelledby="how-heading">
+          <Reveal>
+            <h2 id="how-heading" className="text-lg font-semibold text-foreground mb-1">
+              {t.home.howTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">{t.home.howSubtitle}</p>
+          </Reveal>
+          <ol className="flex flex-col gap-3">
+            {t.home.steps.map((s, i) => (
+              <Reveal key={s.title} as="li" delay={i * 60}>
+                <div className="flex gap-4 rounded-xl border border-border/60 bg-card p-4">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold tabular-nums">
+                    {i + 1}
+                  </span>
+                  <div className="flex flex-col gap-0.5 pt-0.5">
+                    <h3 className="text-sm font-semibold text-foreground">{s.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+        </section>
+
+        {/* ── About / SEO prose ── */}
+        <section className="mt-20" aria-labelledby="about-heading">
+          <Reveal>
+            <h2 id="about-heading" className="text-lg font-semibold text-foreground mb-4">
+              {t.home.aboutTitle}
+            </h2>
+            <div className="flex flex-col gap-4">
+              {t.home.aboutParagraphs.map((p, i) => (
+                <p key={i} className="text-sm text-muted-foreground leading-relaxed">
+                  {p}
+                </p>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ── FAQ section ── */}
+        <section className="mt-20" aria-labelledby="faq-heading">
+          <Reveal>
+            <h2 id="faq-heading" className="text-lg font-semibold text-foreground mb-1">
+              {t.home.faqTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">{t.home.faqSubtitle}</p>
+          </Reveal>
+          <Reveal>
+            <div className="rounded-lg border border-border/60 px-4">
+              {faqsData[language].map((faq) => (
+                <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+              ))}
+            </div>
+          </Reveal>
         </section>
 
       </main>

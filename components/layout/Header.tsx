@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { useResumeStore } from '@/store/resume-store'
 import { translations } from '@/i18n/translations'
 
@@ -66,6 +67,9 @@ export function Header() {
             <Link href="/">{t.nav.home}</Link>
           </Button>
 
+          {/* Theme toggle */}
+          <ThemeToggle />
+
           {/* Language selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -100,13 +104,11 @@ export function Header() {
 
       {/* Privacy notice — dismissible sub-bar */}
       {privacyVisible && (
-        <div className="border-t border-border/40 bg-muted/30 px-4 py-1.5 sm:px-6">
+        <div className="border-t border-border/40 bg-muted/30 px-4 py-1.5 sm:px-6 animate-in fade-in-0 slide-in-from-top-1 duration-300 ease-out">
           <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
             <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="size-3 shrink-0 text-green-600 dark:text-green-500" />
-              <span>
-                <ShieldCheck className="h-4 w-4" />
-              </span> {t.privacy.message}
+              <span>{t.privacy.message}</span>
             </p>
             <button
               type="button"

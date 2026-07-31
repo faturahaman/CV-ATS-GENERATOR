@@ -56,6 +56,79 @@
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* ── Reusable keyframe utilities ─────────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Scroll-reveal: elements start hidden, animate in when .is-visible is added */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children — set --reveal-delay inline for cascade effect */
+.reveal[style*="--reveal-delay"] {
+  transition-delay: var(--reveal-delay);
+}
+
+/* Smooth accordion: animate max-height via grid-template-rows trick */
+.accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.accordion-content.is-open {
+  grid-template-rows: 1fr;
+}
+.accordion-content > .accordion-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Gentle entrance for the whole app on first mount */
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+/* ── Respect user's reduced-motion preference ──────────────────────────────────
+   Kills all non-essential motion for accessibility & battery. Opacity stays. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .accordion-content {
+    transition: none !important;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
